@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOTOS - Structural Wireframes</title>
+<style>
+    :root {
+        --bg-pure-black: #000000;
+        --bg-panel: #050505;
+        --text-glowing-white: #ffffff;
+        --text-dim: #666666;
+        --glow-subtle: 0 0 8px rgba(255, 255, 255, 0.3);
+        --glow-intense: 0 0 15px rgba(255, 255, 255, 0.8);
+        --border-dim: 1px solid rgba(255, 255, 255, 0.15);
+        --border-glow: 1px solid rgba(255, 255, 255, 0.6);
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: var(--bg-pure-black);
+        color: var(--text-glowing-white);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 100px;
+    }
+
+    .wireframe-section {
+        position: relative;
+        border: var(--border-dim);
+        background-color: var(--bg-panel);
+        padding: 60px 40px 40px 40px;
+        min-height: 500px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .view-label {
+        position: absolute;
+        top: -12px;
+        left: 20px;
+        background: var(--bg-pure-black);
+        padding: 0 15px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--text-dim);
+        border: var(--border-dim);
+    }
+
+    h1, h2, h3 {
+        margin: 0;
+        font-weight: 400;
+    }
+
+    .btn {
+        background: transparent;
+        color: var(--text-glowing-white);
+        border: var(--border-glow);
+        padding: 10px 20px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: var(--glow-subtle);
+    }
+
+    .btn:hover {
+        box-shadow: var(--glow-intense);
+        text-shadow: var(--glow-subtle);
+    }
+
+    /* 1. Landing View */
+    .landing-view {
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+    .landing-title {
+        font-size: 4rem;
+        letter-spacing: 8px;
+        text-shadow: var(--glow-intense);
+        margin-bottom: 10px;
+    }
+    .landing-subtitle {
+        color: var(--text-dim);
+        letter-spacing: 4px;
+        margin-bottom: 50px;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+    }
+
+    /* 2 & 3. List Views (Projects & Notes) */
+    .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        border-bottom: var(--border-glow);
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 10px -5px rgba(255,255,255,0.5);
+    }
+    .list-title {
+        font-size: 2rem;
+        text-shadow: var(--glow-subtle);
+    }
+    .list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 0;
+        border-bottom: var(--border-dim);
+    }
+    .item-main {
+        font-size: 1.2rem;
+    }
+    .item-meta {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+        text-align: right;
+    }
+    .meta-stat {
+        display: inline-block;
+        margin-left: 20px;
+    }
+
+    /* 4. Note Detail View */
+    .detail-header {
+        margin-bottom: 40px;
+    }
+    .nav-back {
+        color: var(--text-dim);
+        text-decoration: none;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 30px;
+        display: inline-block;
+    }
+    .detail-title {
+        font-size: 2.5rem;
+        text-shadow: var(--glow-intense);
+        margin-bottom: 10px;
+    }
+    .detail-meta {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+    }
+    .detail-body {
+        line-height: 1.8;
+        font-size: 1.1rem;
+        color: #e0e0e0;
+        max-width: 800px;
+    }
+
+    /* 5. Full Screen Canvas (Add/Edit) */
+    .canvas-view {
+        background-color: var(--bg-pure-black); /* Overriding panel to represent pure fullscreen */
+        border: none;
+        outline: var(--border-dim);
+        outline-offset: -1px;
+    }
+    .canvas-topbar {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 50px;
+    }
+    .canvas-status {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        align-self: center;
+    }
+    .input-bare {
+        background: transparent;
+        border: none;
+        color: var(--text-glowing-white);
+        font-family: inherit;
+        width: 100%;
+    }
+    .input-bare:focus {
+        outline: none;
+    }
+    .input-title {
+        font-size: 3rem;
+        font-weight: 400;
+        margin-bottom: 30px;
+        text-shadow: var(--glow-intense);
+    }
+    .input-title::placeholder {
+        color: rgba(255, 255, 255, 0.1);
+        text-shadow: none;
+    }
+    .input-content {
+        flex-grow: 1;
+        font-size: 1.2rem;
+        line-height: 1.8;
+        resize: none;
+    }
+    .input-content::placeholder {
+        color: rgba(255, 255, 255, 0.1);
+    }
+</style>
+</head>
+<body>
+
+    <!-- VIEW 1: Landing -->
+    <div class="wireframe-section landing-view">
+        <div class="view-label">View: Landing (Unauthenticated)</div>
+        <h1 class="landing-title">NOTOS</h1>
+        <div class="landing-subtitle">Noise To Signal</div>
+        <button class="btn">Authenticate</button>
+    </div>
+
+    <!-- VIEW 2: Project List -->
+    <div class="wireframe-section">
+        <div class="view-label">View: Project Dashboard</div>
+
+        <div class="list-header">
+            <h2 class="list-title">Projects</h2>
+            <button class="btn">+ New Project</button>
+        </div>
+
+        <div class="list-item">
+            <div class="item-main">Default</div>
+            <div class="item-meta">
+                <span class="meta-stat">12 Notes</span>
+                <span class="meta-stat">Updated: 2026-06-23</span>
+            </div>
+        </div>
+        <div class="list-item">
+            <div class="item-main" style="text-shadow: var(--glow-subtle);">Work & Engineering</div>
+            <div class="item-meta">
+                <span class="meta-stat">34 Notes</span>
+                <span class="meta-stat" style="color: var(--text-glowing-white);">Updated: Today</span>
+            </div>
+        </div>
+        <div class="list-item">
+            <div class="item-main">Personal Log</div>
+            <div class="item-meta">
+                <span class="meta-stat">8 Notes</span>
+                <span class="meta-stat">Updated: 2026-06-20</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 3: Note List -->
+    <div class="wireframe-section">
+        <div class="view-label">View: Note List (Inside 'Work & Engineering')</div>
+
+        <span class="nav-back">&larr; Back to Projects</span>
+
+        <div class="list-header">
+            <h2 class="list-title">Work & Engineering</h2>
+            <button class="btn">+ New Note</button>
+        </div>
+
+        <div class="list-item">
+            <div class="item-main" style="text-shadow: var(--glow-subtle);">System Design Draft</div>
+            <div class="item-meta">
+                <span class="meta-stat">[ architecture ]</span>
+                <span class="meta-stat" style="color: var(--text-glowing-white);">Today, 14:30</span>
+            </div>
+        </div>
+        <div class="list-item">
+            <div class="item-main">Meeting Notes: API Integration</div>
+            <div class="item-meta">
+                <span class="meta-stat">[ meeting ]</span>
+                <span class="meta-stat">Yesterday, 09:15</span>
+            </div>
+        </div>
+        <div class="list-item">
+            <div class="item-main">Ideas for caching layer</div>
+            <div class="item-meta">
+                <span class="meta-stat">[ ideas ]</span>
+                <span class="meta-stat">2026-06-18</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 4: Note Detail View -->
+    <div class="wireframe-section">
+        <div class="view-label">View: Note Detail (Read-Only State)</div>
+
+        <div class="detail-header">
+            <span class="nav-back">&larr; Work & Engineering</span>
+            <div style="float: right;">
+                <button class="btn" style="border: none; box-shadow: none;">Edit</button>
+            </div>
+            <h2 class="detail-title">System Design Draft</h2>
+            <div class="detail-meta">Tag: architecture | Created: Today, 14:30</div>
+        </div>
+
+        <div class="detail-body">
+            <p>The core philosophy here is offline-first. We need to ensure that the optimistic UI renders instantly without waiting for the Supabase network confirmation.</p>
+            <p>Local state management will be handled via standard React context, with a sync queue running in the background. If the user creates a note, it gets a temporary client ID. Once the server confirms, we map the client ID to the real UUID.</p>
+        </div>
+    </div>
+
+    <!-- VIEW 5: Add/Edit Canvas -->
+    <div class="wireframe-section canvas-view">
+        <div class="view-label">View: Full Screen Canvas (Add/Edit Mode)</div>
+
+        <div class="canvas-topbar">
+            <span class="nav-back">&larr; Cancel</span>
+            <span class="canvas-status">Autosaving...</span>
+            <button class="btn">Done</button>
+        </div>
+
+        <input type="text" class="input-bare input-title" placeholder="Enter title..." value="Optimistic UI Rules">
+
+        <textarea class="input-bare input-content" placeholder="Start typing...">Write text, see text. That is the entire UX.
+No formatting bars.
+No clutter.
+Just pure signal.</textarea>
+    </div>
+
+</body>
+</html>
