@@ -85,7 +85,7 @@ export function NoteList({
     headerTitle = (
       <input
         ref={nameInputRef}
-        className="input-edit text-heading glow-text w-full"
+        className="input-edit border-b-0! !pb-0 text-heading glow-text w-full"
         value={draftName}
         onChange={(event) => setDraftName(event.target.value)}
         onBlur={saveProjectName}

@@ -54,8 +54,8 @@
   --text-glowing-white: #ffffff;
   --text-dim: #666666;
   --text-body-muted: #e0e0e0;
-  --glow-subtle: 0 0 4px rgba(255, 255, 255, 0.15);
-  --glow-intense: 0 0 8px rgba(255, 255, 255, 0.35);
+  --glow-subtle: 0 0 4px rgba(255, 255, 255, 0.35);
+  --glow-intense: 0 0 8px rgba(255, 255, 255, 0.55);
   --border-dim: 1px solid rgba(255, 255, 255, 0.15);
   --border-glow: 1px solid rgba(255, 255, 255, 0.6);
   --background: var(--bg-pure-black);
@@ -119,21 +119,21 @@
   }
 
   .text-heading {
-    font-size: 1.875rem;
+    font-size: 3rem;
     font-weight: 400;
     letter-spacing: 0.02em;
     line-height: 1.2;
   }
 
   .text-body {
-    font-size: 1.125rem;
+    font-size: 1.5rem;
     font-weight: 400;
     line-height: 1.75;
     color: var(--text-body-muted);
   }
 
   .text-caption {
-    font-size: 0.875rem;
+    font-size: 1rem;
     font-weight: 400;
     line-height: 1.5;
     color: var(--muted-foreground);
@@ -166,12 +166,17 @@
   }
 
   .list-header {
-    @apply mb-5 flex items-end justify-between border-b border-white/60 pb-5;
-    box-shadow: 0 1px 10px -5px rgba(255, 255, 255, 0.5);
+    @apply mb-4 flex items-end justify-between border-b border-white/60 pb-4;
   }
 
   .list-row {
-    @apply border-b border-white/15 py-5 transition-colors last:border-b-0;
+    @apply border-b border-white/15 py-5 hover:border-l-4 hover:pl-4 hover:border-l-white/75 transition-all duration-300;
+  }
+
+  .list-row:hover {
+    .text-caption {
+      color: var(--text-glowing-white) !important;
+    }
   }
 
   .list-row-interactive {
@@ -197,7 +202,7 @@
   .input-edit {
     background: transparent;
     border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
     color: var(--text-glowing-white);
     font-family: inherit;
     width: 100%;

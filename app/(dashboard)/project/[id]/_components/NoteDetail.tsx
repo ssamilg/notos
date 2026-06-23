@@ -157,7 +157,7 @@ export function NoteDetail({
         ← Back to Notes
       </Link>
 
-      <header className="mb-4 flex items-start justify-between gap-4">
+      <header className="mb-4 flex items-end justify-between gap-4">
         {titleContent}
         {headerActions}
       </header>
