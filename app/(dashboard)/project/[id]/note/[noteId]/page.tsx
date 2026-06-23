@@ -1,23 +1,36 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useNotes } from "@/context/NoteProvider";
+import { useNavigation } from "@/context/NavigationProvider";
 import { NoteDetail } from "@/app/(dashboard)/project/[id]/_components/NoteDetail";
 import { NoteDetailSkeleton } from "@/components/skeletons/NoteDetailSkeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-function isNewNote(noteId: string, title: string, text: string) {
-  return noteId.startsWith("temp-") || (title === "Untitled" && text.trim() === "");
-}
-
 export default function NoteDetailPage() {
   const params = useParams<{ id: string; noteId: string }>();
   const router = useRouter();
-  const { getNote, loading, error, updateNote, deleteNote } = useNotes();
+  const {
+    getNote,
+    ready,
+    error,
+    isDraftNote,
+    saveDraftNote,
+    cancelDraftNote,
+    updateNote,
+    deleteNote,
+  } = useNotes();
+  const { navigateToProject, isPendingNote, clearPending } = useNavigation();
   const [isDeleting, setIsDeleting] = useState(false);
   const note = getNote(params.noteId);
-  const showSkeleton = isDeleting || (loading && !note);
+  const isDraft = isDraftNote(params.noteId);
+
+  useLayoutEffect(() => {
+    if (ready && note) {
+      clearPending();
+    }
+  }, [ready, note, clearPending]);
 
   useEffect(() => {
     function handleSyncResolved(event: Event) {
@@ -44,6 +57,26 @@ export default function NoteDetailPage() {
     };
   }, [params.id, params.noteId, router]);
 
+  function handleBack() {
+    if (isDraft) {
+      cancelDraftNote(params.noteId);
+    }
+
+    navigateToProject(params.id);
+  }
+
+  function handleSave(input: { title?: string; text?: string; tag?: string | null }) {
+    if (isDraft) {
+      saveDraftNote(params.noteId, input);
+      return;
+    }
+
+    updateNote(params.noteId, input);
+  }
+
+  const showSkeleton =
+    isDeleting || isPendingNote(params.id, params.noteId) || !ready || !note;
+
   let content = <NoteDetailSkeleton />;
 
   if (showSkeleton) {
@@ -51,25 +84,27 @@ export default function NoteDetailPage() {
   } else if (note) {
     content = (
       <NoteDetail
-        key={params.noteId}
+        key={`${params.noteId}-${isDraft ? "draft" : "saved"}`}
         note={note}
         projectId={params.id}
-        initialEditing={isNewNote(note.id, note.title, note.text)}
-        onSave={(input) => updateNote(params.noteId, input)}
+        isDraft={isDraft}
+        onSave={handleSave}
+        onCancel={handleBack}
+        onBack={handleBack}
         onDelete={() => {
           setIsDeleting(true);
           deleteNote(params.noteId);
-          router.push(`/project/${params.id}`);
+          navigateToProject(params.id);
         }}
       />
     );
-  } else if (error && !loading && !isDeleting) {
+  } else if (error && ready && !isDeleting) {
     content = (
       <Alert variant="destructive">
         <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
-  } else if (!loading && !isDeleting) {
+  } else if (ready && !isDeleting) {
     content = (
       <Alert>
         <AlertDescription className="py-8 text-center">Note not found.</AlertDescription>

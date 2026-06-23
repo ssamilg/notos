@@ -14,6 +14,7 @@ type NoteListProps = {
   onSelectNote: (noteId: string) => void;
   onCreateNote: () => string | undefined;
   onRenameProject: (name: string) => void;
+  onBack: () => void;
 };
 
 export function NoteList({
@@ -22,6 +23,7 @@ export function NoteList({
   onSelectNote,
   onCreateNote,
   onRenameProject,
+  onBack,
 }: NoteListProps) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [draftName, setDraftName] = useState(projectName);
@@ -74,7 +76,7 @@ export function NoteList({
   let headerTitle = (
     <button
       type="button"
-      className="text-heading glow-text text-left"
+      className="text-heading glow-text cursor-pointer text-left"
       onClick={startEditingName}
     >
       {projectName}
@@ -85,7 +87,7 @@ export function NoteList({
     headerTitle = (
       <input
         ref={nameInputRef}
-        className="input-edit border-b-0! !pb-0 text-heading glow-text w-full"
+        className="input-bare text-heading glow-text w-full"
         value={draftName}
         onChange={(event) => setDraftName(event.target.value)}
         onBlur={saveProjectName}
@@ -140,7 +142,11 @@ export function NoteList({
     <div>
       <Link
         href="/dashboard"
-        className="text-label mb-6 inline-block text-muted-foreground hover:text-foreground"
+        className="text-label mb-6 inline-block cursor-pointer text-muted-foreground hover:text-foreground"
+        onClick={(event) => {
+          event.preventDefault();
+          onBack();
+        }}
       >
         ← Back to Projects
       </Link>

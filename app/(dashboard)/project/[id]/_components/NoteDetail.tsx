@@ -5,7 +5,6 @@ import { useRef, useState } from "react";
 import type { Note } from "@/data/notes";
 import { DateDisplay } from "@/components/DateDisplay";
 import { GlowButton } from "@/components/glow-button";
-import { Button } from "@/components/ui/button";
 
 type NoteDraft = {
   title: string;
@@ -16,8 +15,10 @@ type NoteDraft = {
 type NoteDetailProps = {
   note: Note;
   projectId: string;
-  initialEditing?: boolean;
+  isDraft?: boolean;
   onSave: (input: { title?: string; text?: string; tag?: string | null }) => void;
+  onCancel: () => void;
+  onBack: () => void;
   onDelete: () => void;
 };
 
@@ -36,11 +37,13 @@ function draftsEqual(a: NoteDraft, b: NoteDraft) {
 export function NoteDetail({
   note,
   projectId,
-  initialEditing = false,
+  isDraft = false,
   onSave,
+  onCancel,
+  onBack,
   onDelete,
 }: NoteDetailProps) {
-  const [isEditing, setIsEditing] = useState(initialEditing);
+  const [isEditing, setIsEditing] = useState(isDraft);
   const [draft, setDraft] = useState<NoteDraft>(() => noteToDraft(note));
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -52,15 +55,40 @@ export function NoteDetail({
   }
 
   function handleSave() {
-    if (draftsEqual(draft, savedSnapshotRef.current)) {
+    const trimmedTitle = draft.title.trim();
+
+    if (isDraft && !trimmedTitle) {
+      onCancel();
+      return;
+    }
+
+    if (draftsEqual(draft, savedSnapshotRef.current) && !isDraft) {
       setIsEditing(false);
       return;
     }
 
     setIsSaving(true);
-    onSave(draft);
-    savedSnapshotRef.current = draft;
+    onSave({
+      title: trimmedTitle || "Untitled",
+      text: draft.text,
+      tag: draft.tag,
+    });
+    savedSnapshotRef.current = {
+      title: trimmedTitle || "Untitled",
+      text: draft.text,
+      tag: draft.tag,
+    };
     setIsSaving(false);
+    setIsEditing(false);
+  }
+
+  function handleCancel() {
+    if (isDraft) {
+      onCancel();
+      return;
+    }
+
+    setDraft(savedSnapshotRef.current);
     setIsEditing(false);
   }
 
@@ -77,21 +105,28 @@ export function NoteDetail({
   }
 
   let headerActions = (
-    <div className="flex shrink-0 gap-2">
+    <>
+      <GlowButton type="button" onClick={handleDelete} disabled={isDeleting}>
+        {isDeleting ? "Deleting…" : "Delete"}
+      </GlowButton>
+
       <GlowButton type="button" onClick={startEditing} disabled={isDeleting}>
         Edit
       </GlowButton>
-      {/* <Button type="button" variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-        {isDeleting ? "Deleting…" : "Delete"}
-      </Button> */}
-    </div>
+    </>
   );
 
   if (isEditing) {
     headerActions = (
-      <GlowButton type="button" onClick={handleSave} disabled={isSaving}>
-        {isSaving ? "Saving…" : "Save"}
-      </GlowButton>
+      <>
+        <GlowButton type="button" onClick={handleCancel} disabled={isSaving}>
+         Cancel
+        </GlowButton>
+
+        <GlowButton type="button" onClick={handleSave} disabled={isSaving}>
+          {isSaving ? "Saving…" : "Save"}
+        </GlowButton>
+      </>
     );
   }
 
@@ -111,16 +146,16 @@ export function NoteDetail({
     );
   }
 
-  let tagContent = (
+  let tagRowStart = (
     <span className="text-caption text-muted-foreground">
       {note.tag ? `[ ${note.tag} ]` : "No tag"}
     </span>
   );
 
   if (isEditing) {
-    tagContent = (
+    tagRowStart = (
       <input
-        className="input-edit text-caption w-auto min-w-[6rem] text-muted-foreground"
+        className="input-edit text-caption min-w-0 flex-1 text-muted-foreground"
         value={draft.tag ?? ""}
         onChange={(event) => handleFieldChange("tag", event.target.value)}
         placeholder="Tag"
@@ -141,6 +176,7 @@ export function NoteDetail({
       <textarea
         className="input-edit text-body min-h-[50vh] resize-none"
         value={draft.text}
+        placeholder="There should be some text here..."
         onChange={(event) => handleFieldChange("text", event.target.value)}
         aria-label="Note content"
         disabled={isSaving}
@@ -152,21 +188,27 @@ export function NoteDetail({
     <article>
       <Link
         href={`/project/${projectId}`}
-        className="text-label mb-8 inline-block text-muted-foreground hover:text-foreground"
+        className="text-label mb-8 inline-block cursor-pointer text-muted-foreground hover:text-foreground"
+        onClick={(event) => {
+          event.preventDefault();
+          onBack();
+        }}
       >
         ← Back to Notes
       </Link>
 
-      <header className="mb-4 flex items-end justify-between gap-4">
+      <header className="mb-4 flex items-end justify-between gap-2">
         {titleContent}
         {headerActions}
       </header>
 
       <div className="mb-10 flex items-center justify-between gap-4">
-        {tagContent}
-        {!isEditing && (
-          <DateDisplay updatedAt={note.updated_at} createdAt={note.created_at} />
-        )}
+        {tagRowStart}
+        <div className="flex shrink-0 items-center gap-4">
+          {isEditing ? null : (
+            <DateDisplay updatedAt={note.updated_at} createdAt={note.created_at} />
+          )}
+        </div>
       </div>
 
       {bodyContent}

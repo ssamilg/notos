@@ -1,30 +1,48 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useLayoutEffect } from "react";
+import { useParams } from "next/navigation";
 import { useProjects } from "@/context/ProjectProvider";
 import { useNotes } from "@/context/NoteProvider";
+import { useNavigation } from "@/context/NavigationProvider";
 import { NoteList } from "./_components/NoteList";
 import { NoteListSkeleton } from "@/components/skeletons/NoteListSkeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ProjectNotesPage() {
   const params = useParams<{ id: string }>();
-  const router = useRouter();
-  const { projects, loading: projectsLoading, updateProject } = useProjects();
-  const { notes, loading: notesLoading, error, createNote } = useNotes();
+  const { projects, ready: projectsReady, updateProject } = useProjects();
+  const { notes, ready: notesReady, error, createDraftNote } = useNotes();
+  const { navigateToNote, navigateToProjects, isPendingNotes, clearPending } = useNavigation();
 
   const project = projects.find((item) => item.id === params.id);
 
-  const showSkeleton =
-    (notesLoading && notes.length === 0) || (projectsLoading && projects.length === 0);
+  useLayoutEffect(() => {
+    if (notesReady) {
+      clearPending();
+    }
+  }, [notesReady, clearPending]);
+
+  function handleCreateNote() {
+    const noteId = createDraftNote();
+
+    if (noteId) {
+      navigateToNote(params.id, noteId, { instant: true });
+    }
+
+    return noteId;
+  }
+
+  const showSkeleton = isPendingNotes(params.id) || !notesReady;
 
   let content = (
     <NoteList
       projectName={project?.name ?? "Project"}
       notes={notes}
-      onSelectNote={(noteId) => router.push(`/project/${params.id}/note/${noteId}`)}
-      onCreateNote={() => createNote("Untitled", "", null)}
+      onSelectNote={(noteId) => navigateToNote(params.id, noteId)}
+      onCreateNote={handleCreateNote}
       onRenameProject={(name) => updateProject(params.id, name)}
+      onBack={navigateToProjects}
     />
   );
 
@@ -32,7 +50,7 @@ export default function ProjectNotesPage() {
     content = <NoteListSkeleton />;
   }
 
-  if (error && notes.length === 0) {
+  if (error && notes.length === 0 && notesReady) {
     content = (
       <Alert variant="destructive">
         <AlertTitle>Error</AlertTitle>
@@ -41,7 +59,7 @@ export default function ProjectNotesPage() {
     );
   }
 
-  if (!project && !projectsLoading) {
+  if (!project && projectsReady && !showSkeleton) {
     content = (
       <Alert>
         <AlertDescription className="py-8 text-center">Project not found.</AlertDescription>

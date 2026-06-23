@@ -13,6 +13,7 @@ import {
 import type { Note } from "@/data/notes";
 import {
   getCachedNotes,
+  hasCachedNotes,
   hasFetchedNotes,
   markNotesFetched,
   resolveUserId,
@@ -21,21 +22,30 @@ import {
 import { readNotes, writeNotes } from "@/lib/storage/indexedDb";
 import {
   addSyncListener,
-  coalescePendingPost,
   enqueueOperation,
   removeSyncListener,
   retryFailedOperations,
 } from "@/lib/sync/queue";
 import { apiFetch } from "@/utils/api/client";
 
+type NoteInput = {
+  title?: string;
+  text?: string;
+  tag?: string | null;
+};
+
 type NoteState = {
   notes: Note[];
   loading: boolean;
+  ready: boolean;
   error: string | null;
   pendingSync: number;
   failedSync: number;
-  createNote: (title: string, text: string, tag?: string | null) => string | undefined;
-  updateNote: (id: string, input: { title?: string; text?: string; tag?: string | null }) => void;
+  createDraftNote: () => string | undefined;
+  saveDraftNote: (id: string, input: NoteInput) => void;
+  cancelDraftNote: (id: string) => void;
+  isDraftNote: (id: string) => boolean;
+  updateNote: (id: string, input: NoteInput) => void;
   deleteNote: (id: string) => void;
   getNote: (id: string) => Note | undefined;
   refreshNotes: () => Promise<void>;
@@ -77,24 +87,23 @@ type NoteProviderProps = {
 export function NoteProvider({ projectId, children }: NoteProviderProps) {
   const cachedNotes = getCachedNotes(projectId);
   const [notes, setNotes] = useState<Note[]>(cachedNotes ?? []);
+  const [draftNotes, setDraftNotes] = useState<Record<string, Note>>({});
   const [loading, setLoading] = useState(!cachedNotes);
+  const [ready, setReady] = useState(() => hasCachedNotes(projectId));
   const [error, setError] = useState<string | null>(null);
   const [pendingSync, setPendingSync] = useState(0);
   const [failedSync, setFailedSync] = useState(0);
   const userIdRef = useRef<string | null>(null);
   const projectIdRef = useRef(projectId);
 
-  const persistNotes = useCallback(
-    async (nextNotes: Note[]) => {
-      setNotes(nextNotes);
-      setCachedNotes(projectIdRef.current, nextNotes);
+  const persistNotes = useCallback(async (nextNotes: Note[]) => {
+    setNotes(nextNotes);
+    setCachedNotes(projectIdRef.current, nextNotes);
 
-      if (userIdRef.current) {
-        await writeNotes(userIdRef.current, projectIdRef.current, nextNotes);
-      }
-    },
-    []
-  );
+    if (userIdRef.current) {
+      await writeNotes(userIdRef.current, projectIdRef.current, nextNotes);
+    }
+  }, []);
 
   const fetchRemoteNotes = useCallback(async (currentUserId: string, currentProjectId: string) => {
     const remote = await apiFetch<Note[]>(`/api/v1/notes?projectId=${currentProjectId}`);
@@ -114,6 +123,7 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
         setLoading(false);
 
         if (!forceRemote && hasFetchedNotes(currentProjectId)) {
+          setReady(true);
           return;
         }
       }
@@ -126,12 +136,14 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
         setLoading(false);
 
         if (!forceRemote && hasFetchedNotes(currentProjectId)) {
+          setReady(true);
           return;
         }
       }
 
       if (!forceRemote && hasFetchedNotes(currentProjectId)) {
         setLoading(false);
+        setReady(true);
         return;
       }
 
@@ -143,6 +155,7 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
         setError(idbCached.length === 0 && !memoryCached ? message : null);
       } finally {
         setLoading(false);
+        setReady(true);
       }
     },
     [fetchRemoteNotes]
@@ -160,6 +173,7 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
 
       if (!resolvedUserId) {
         setLoading(false);
+        setReady(true);
         setError("Not authenticated");
         return;
       }
@@ -220,16 +234,46 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
     };
   }, [hydrateNotes, projectId]);
 
-  const createNote = useCallback(
-    (title: string, text: string, tag?: string | null) => {
-      const currentUserId = userIdRef.current;
+  const createDraftNote = useCallback(() => {
+    const currentUserId = userIdRef.current;
 
-      if (!currentUserId) {
-        return undefined;
+    if (!currentUserId) {
+      return undefined;
+    }
+
+    const draft = createTempNote(projectIdRef.current, currentUserId, "Untitled", "", null);
+
+    setDraftNotes((current) => ({
+      ...current,
+      [draft.id]: draft,
+    }));
+
+    return draft.id;
+  }, []);
+
+  const saveDraftNote = useCallback(
+    (id: string, input: NoteInput) => {
+      const draft = draftNotes[id];
+
+      if (!draft) {
+        return;
       }
 
-      const optimistic = createTempNote(projectIdRef.current, currentUserId, title, text, tag);
-      const next = [optimistic, ...notes];
+      const saved: Note = {
+        ...draft,
+        title: input.title ?? draft.title,
+        text: input.text ?? draft.text,
+        tag: input.tag !== undefined ? input.tag : draft.tag,
+        updated_at: new Date().toISOString(),
+      };
+
+      setDraftNotes((current) => {
+        const nextDrafts = { ...current };
+        delete nextDrafts[id];
+        return nextDrafts;
+      });
+
+      const next = [saved, ...notes];
       void persistNotes(next);
 
       enqueueOperation({
@@ -238,22 +282,39 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
         url: "/api/v1/notes",
         body: {
           projectId: projectIdRef.current,
-          title,
-          text,
-          tag: tag ?? null,
+          title: saved.title,
+          text: saved.text,
+          tag: saved.tag,
         },
         entityType: "note",
-        tempId: optimistic.id,
+        tempId: saved.id,
         projectId: projectIdRef.current,
       });
-
-      return optimistic.id;
     },
-    [notes, persistNotes]
+    [draftNotes, notes, persistNotes]
+  );
+
+  const cancelDraftNote = useCallback((id: string) => {
+    setDraftNotes((current) => {
+      if (!current[id]) {
+        return current;
+      }
+
+      const nextDrafts = { ...current };
+      delete nextDrafts[id];
+      return nextDrafts;
+    });
+  }, []);
+
+  const isDraftNote = useCallback(
+    (id: string) => {
+      return Boolean(draftNotes[id]);
+    },
+    [draftNotes]
   );
 
   const updateNote = useCallback(
-    (id: string, input: { title?: string; text?: string; tag?: string | null }) => {
+    (id: string, input: NoteInput) => {
       const next = notes.map((note) => {
         if (note.id !== id) {
           return note;
@@ -266,20 +327,6 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
         };
       });
       void persistNotes(next);
-
-      if (isTempId(id)) {
-        const updated = next.find((note) => note.id === id);
-
-        if (updated) {
-          coalescePendingPost(id, {
-            title: updated.title,
-            text: updated.text,
-            tag: updated.tag,
-          });
-        }
-
-        return;
-      }
 
       enqueueOperation({
         id: crypto.randomUUID(),
@@ -295,6 +342,11 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
 
   const deleteNote = useCallback(
     (id: string) => {
+      if (draftNotes[id]) {
+        cancelDraftNote(id);
+        return;
+      }
+
       const next = notes.filter((note) => note.id !== id);
       void persistNotes(next);
 
@@ -311,14 +363,18 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
         projectId: projectIdRef.current,
       });
     },
-    [notes, persistNotes]
+    [cancelDraftNote, draftNotes, notes, persistNotes]
   );
 
   const getNote = useCallback(
     (id: string) => {
+      if (draftNotes[id]) {
+        return draftNotes[id];
+      }
+
       return notes.find((note) => note.id === id);
     },
-    [notes]
+    [draftNotes, notes]
   );
 
   const refreshNotes = useCallback(async () => {
@@ -326,19 +382,23 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
       return;
     }
 
-    setLoading(notes.length === 0);
+    setLoading(true);
+    setReady(false);
     await hydrateNotes(userIdRef.current, projectIdRef.current, true);
-    setLoading(false);
-  }, [hydrateNotes, notes.length]);
+  }, [hydrateNotes]);
 
   const value = useMemo(
     () => ({
       notes,
       loading,
+      ready,
       error,
       pendingSync,
       failedSync,
-      createNote,
+      createDraftNote,
+      saveDraftNote,
+      cancelDraftNote,
+      isDraftNote,
       updateNote,
       deleteNote,
       getNote,
@@ -348,10 +408,14 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
     [
       notes,
       loading,
+      ready,
       error,
       pendingSync,
       failedSync,
-      createNote,
+      createDraftNote,
+      saveDraftNote,
+      cancelDraftNote,
+      isDraftNote,
       updateNote,
       deleteNote,
       getNote,

@@ -1,47 +1,101 @@
 "use client";
 
-import { useEffect, useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import type { ProjectWithCount } from "@/data/projects";
 import { DateDisplay } from "@/components/DateDisplay";
 import { GlowButton } from "@/components/glow-button";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type ProjectListProps = {
   projects: ProjectWithCount[];
-  showCreateForm: boolean;
-  newName: string;
-  onToggleCreate: () => void;
-  onNameChange: (value: string) => void;
-  onCreate: (event: React.FormEvent<HTMLFormElement>) => void;
+  isCreating: boolean;
+  draftName: string;
+  onStartCreate: () => void;
   onCancelCreate: () => void;
+  onDraftNameChange: (value: string) => void;
+  onSaveCreate: () => void;
   onSelect: (id: string) => void;
 };
 
 export function ProjectList({
   projects,
-  showCreateForm,
-  newName,
-  onToggleCreate,
-  onNameChange,
-  onCreate,
+  isCreating,
+  draftName,
+  onStartCreate,
   onCancelCreate,
+  onDraftNameChange,
+  onSaveCreate,
   onSelect,
 }: ProjectListProps) {
   const headingId = useId();
-  const createFormId = useId();
-  const nameInputId = useId();
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const saveClickedRef = useRef(false);
 
   useEffect(() => {
-    if (showCreateForm) {
-      document.getElementById(nameInputId)?.focus();
+    if (isCreating) {
+      nameInputRef.current?.focus();
     }
-  }, [showCreateForm, nameInputId]);
+  }, [isCreating]);
+
+  function handleSaveClick() {
+    saveClickedRef.current = true;
+    onSaveCreate();
+  }
+
+  function handleNameBlur() {
+    if (saveClickedRef.current) {
+      saveClickedRef.current = false;
+      return;
+    }
+
+    onCancelCreate();
+  }
+
+  function handleNameKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleSaveClick();
+    }
+
+    if (event.key === "Escape") {
+      onCancelCreate();
+    }
+  }
+
+  let createRow = null;
+
+  if (isCreating) {
+    createRow = (
+      <li>
+        <div className="list-row flex items-center justify-between gap-4">
+          <input
+            ref={nameInputRef}
+            className="input-bare list-row-title min-w-0 flex-1"
+            value={draftName}
+            onChange={(event) => onDraftNameChange(event.target.value)}
+            onBlur={handleNameBlur}
+            onKeyDown={handleNameKeyDown}
+            placeholder="Project name"
+            aria-label="New project name"
+          />
+          <GlowButton
+            type="button"
+            className="shrink-0"
+            onMouseDown={() => {
+              saveClickedRef.current = true;
+            }}
+            onClick={handleSaveClick}
+          >
+            Save
+          </GlowButton>
+        </div>
+      </li>
+    );
+  }
 
   let listBody = (
     <ul className="list-none p-0">
+      {createRow}
       {projects.map((project) => (
         <li key={project.id}>
           <button
@@ -63,7 +117,7 @@ export function ProjectList({
     </ul>
   );
 
-  if (projects.length === 0) {
+  if (projects.length === 0 && !isCreating) {
     listBody = (
       <Alert>
         <AlertDescription className="py-8 text-center">
@@ -73,42 +127,23 @@ export function ProjectList({
     );
   }
 
+  if (isCreating && projects.length === 0) {
+    listBody = <ul className="list-none p-0">{createRow}</ul>;
+  }
+
   return (
     <div>
       <div className="list-header">
         <h1 id={headingId} className="text-heading glow-text">
           Projects
         </h1>
-        <GlowButton type="button" aria-expanded={showCreateForm} aria-controls={createFormId} onClick={onToggleCreate}>
-          {showCreateForm ? "Cancel" : "+ New Project"}
+        <GlowButton
+          type="button"
+          onClick={isCreating ? onCancelCreate : onStartCreate}
+        >
+          {isCreating ? "Cancel" : "+ New Project"}
         </GlowButton>
       </div>
-
-      {showCreateForm ? (
-        <form
-          id={createFormId}
-          onSubmit={onCreate}
-          className="mb-6 flex flex-col gap-3 border border-border bg-card p-4"
-          aria-labelledby={headingId}
-        >
-          <div className="flex flex-col gap-2">
-            <Label htmlFor={nameInputId}>Project name</Label>
-            <Input
-              id={nameInputId}
-              value={newName}
-              onChange={(event) => onNameChange(event.target.value)}
-              placeholder="Enter project name"
-              required
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button type="submit">Create</Button>
-            <Button type="button" variant="outline" onClick={onCancelCreate}>
-              Cancel
-            </Button>
-          </div>
-        </form>
-      ) : null}
 
       <section aria-labelledby={headingId}>{listBody}</section>
     </div>

@@ -62,6 +62,10 @@ export function hasFetchedProjects() {
   return fetchedProjects.current;
 }
 
+export function hasCachedProjects() {
+  return projectsCache !== null;
+}
+
 export function markProjectsFetched() {
   fetchedProjects.current = true;
 }
@@ -76,6 +80,20 @@ export function setCachedNotes(projectId: string, notes: Note[]) {
 
 export function hasFetchedNotes(projectId: string) {
   return fetchedNotes.has(projectId);
+}
+
+export function hasCachedNotes(projectId: string) {
+  return notesCache.has(projectId);
+}
+
+export function hasCachedNote(projectId: string, noteId: string) {
+  const notes = getCachedNotes(projectId);
+
+  if (!notes) {
+    return false;
+  }
+
+  return notes.some((note) => note.id === noteId);
 }
 
 export function markNotesFetched(projectId: string) {

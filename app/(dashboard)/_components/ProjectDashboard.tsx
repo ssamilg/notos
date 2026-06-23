@@ -1,38 +1,56 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { useProjects } from "@/context/ProjectProvider";
+import { useNavigation } from "@/context/NavigationProvider";
 import { ProjectList } from "@/app/(dashboard)/_components/ProjectList";
 import { ProjectListSkeleton } from "@/components/skeletons/ProjectListSkeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
 export function ProjectDashboard() {
-  const router = useRouter();
   const {
     projects,
-    loading,
+    ready,
     error,
     failedSync,
     createProject,
     retrySync,
   } = useProjects();
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newName, setNewName] = useState("");
+  const { navigateToProject, isPendingProjects, clearPending } = useNavigation();
+  const [isCreating, setIsCreating] = useState(false);
+  const [draftName, setDraftName] = useState("");
 
-  function handleCreate(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const trimmed = newName.trim();
+  useLayoutEffect(() => {
+    if (ready) {
+      clearPending();
+    }
+  }, [ready, clearPending]);
+
+  function handleStartCreate() {
+    setDraftName("");
+    setIsCreating(true);
+  }
+
+  function handleCancelCreate() {
+    setDraftName("");
+    setIsCreating(false);
+  }
+
+  function handleSaveCreate() {
+    const trimmed = draftName.trim();
 
     if (!trimmed) {
+      handleCancelCreate();
       return;
     }
 
     createProject(trimmed);
-    setNewName("");
-    setShowCreateForm(false);
+    setDraftName("");
+    setIsCreating(false);
   }
+
+  const showSkeleton = isPendingProjects || !ready;
 
   let content = (
     <div>
@@ -49,25 +67,22 @@ export function ProjectDashboard() {
       ) : null}
       <ProjectList
         projects={projects}
-        showCreateForm={showCreateForm}
-        newName={newName}
-        onToggleCreate={() => setShowCreateForm((current) => !current)}
-        onNameChange={setNewName}
-        onCreate={handleCreate}
-        onCancelCreate={() => {
-          setShowCreateForm(false);
-          setNewName("");
-        }}
-        onSelect={(id) => router.push(`/project/${id}`)}
+        isCreating={isCreating}
+        draftName={draftName}
+        onStartCreate={handleStartCreate}
+        onCancelCreate={handleCancelCreate}
+        onDraftNameChange={setDraftName}
+        onSaveCreate={handleSaveCreate}
+        onSelect={(id) => navigateToProject(id)}
       />
     </div>
   );
 
-  if (loading && projects.length === 0) {
+  if (showSkeleton) {
     content = <ProjectListSkeleton />;
   }
 
-  if (error && projects.length === 0) {
+  if (error && projects.length === 0 && ready) {
     content = (
       <Alert variant="destructive">
         <AlertTitle>Error</AlertTitle>

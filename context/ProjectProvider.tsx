@@ -13,6 +13,7 @@ import {
 import type { ProjectWithCount } from "@/data/projects";
 import {
   getCachedProjects,
+  hasCachedProjects,
   hasFetchedProjects,
   markProjectsFetched,
   resolveUserId,
@@ -25,6 +26,7 @@ import { apiFetch } from "@/utils/api/client";
 type ProjectState = {
   projects: ProjectWithCount[];
   loading: boolean;
+  ready: boolean;
   error: string | null;
   pendingSync: number;
   failedSync: number;
@@ -58,6 +60,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const cachedProjects = getCachedProjects();
   const [projects, setProjects] = useState<ProjectWithCount[]>(cachedProjects ?? []);
   const [loading, setLoading] = useState(!cachedProjects);
+  const [ready, setReady] = useState(() => hasCachedProjects());
   const [error, setError] = useState<string | null>(null);
   const [pendingSync, setPendingSync] = useState(0);
   const [failedSync, setFailedSync] = useState(0);
@@ -91,6 +94,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         setLoading(false);
 
         if (!forceRemote && hasFetchedProjects()) {
+          setReady(true);
           return;
         }
       }
@@ -103,12 +107,14 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         setLoading(false);
 
         if (!forceRemote && hasFetchedProjects()) {
+          setReady(true);
           return;
         }
       }
 
       if (!forceRemote && hasFetchedProjects()) {
         setLoading(false);
+        setReady(true);
         return;
       }
 
@@ -120,6 +126,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         setError(idbCached.length === 0 && !memoryCached ? message : null);
       } finally {
         setLoading(false);
+        setReady(true);
       }
     },
     [fetchRemoteProjects]
@@ -135,6 +142,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     void resolveUserId().then((resolvedUserId) => {
       if (!resolvedUserId) {
         setLoading(false);
+        setReady(true);
         setError("Not authenticated");
         return;
       }
@@ -273,15 +281,16 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setLoading(projects.length === 0);
+    setLoading(true);
+    setReady(false);
     await hydrateProjects(userIdRef.current, true);
-    setLoading(false);
-  }, [hydrateProjects, projects.length]);
+  }, [hydrateProjects]);
 
   const value = useMemo(
     () => ({
       projects,
       loading,
+      ready,
       error,
       pendingSync,
       failedSync,
@@ -294,6 +303,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     [
       projects,
       loading,
+      ready,
       error,
       pendingSync,
       failedSync,
