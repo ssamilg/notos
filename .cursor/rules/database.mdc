@@ -1,0 +1,32 @@
+---
+description: Database and SQL conventions
+globs:
+  - "**/*.sql"
+  - "**/migrations/**/*.{sql,ts,js}"
+  - "**/schema/**/*.{sql,prisma,ts,js}"
+  - "**/db/**/*.{ts,js,sql}"
+  - "**/database/**/*.{ts,js,sql}"
+  - "**/repositories/**/*.{ts,js}"
+  - "**/models/**/*.{ts,js}"
+  - "**/entities/**/*.{ts,js}"
+  - "**/prisma/schema.prisma"
+  - "**/drizzle/**/*.{ts,sql}"
+  - "**/seeds/**/*.{ts,js,sql}"
+alwaysApply: false
+---
+
+# Database Conventions
+
+- Use migrations for all schema changes — never modify production schema manually.
+- Name tables in plural snake_case: `users`, `order_items`.
+- Primary keys: `id` (UUID or bigint). Foreign keys: `{table_singular}_id`.
+- Always add indexes for foreign keys and frequently queried columns.
+- Use transactions for multi-step writes that must succeed or fail together.
+- Parameterize queries — never interpolate user input into SQL strings.
+- Prefer explicit column lists over `SELECT *` in application code.
+
+## Supabase
+
+- Enable Row Level Security (RLS) on all public-facing tables.
+- Write policies that match your application's authorization model.
+- Use the service role key only on the server — never expose it to clients.

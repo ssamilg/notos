@@ -1,0 +1,44 @@
+---
+description: REST API design and implementation
+globs:
+  - "**/routes/**/*.{js,ts,mjs,cjs}"
+  - "**/api/**/*.{js,ts,mjs,cjs}"
+  - "**/controllers/**/*.{js,ts,mjs,cjs}"
+  - "**/handlers/**/*.{js,ts,mjs,cjs}"
+  - "**/endpoints/**/*.{js,ts,mjs,cjs}"
+  - "**/openapi.{yaml,yml,json}"
+  - "**/swagger.{yaml,yml,json}"
+  - "**/api-docs/**/*.{yaml,yml,json,md}"
+alwaysApply: false
+---
+
+# REST API Conventions
+
+## Design
+
+- Use nouns for resources: `/users`, `/users/:id/orders`.
+- HTTP verbs: GET (read), POST (create), PUT/PATCH (update), DELETE (remove).
+- Return appropriate status codes: 200, 201, 204, 400, 401, 403, 404, 422, 500.
+- Paginate list endpoints: `?page=1&limit=20` with `{ data, meta: { total, page, limit } }`.
+- Version APIs via URL prefix: `/v1/users`.
+
+## Responses
+
+```json
+{
+  "data": { "id": "abc", "name": "Jane" },
+  "error": null
+}
+```
+
+```json
+{
+  "data": null,
+  "error": { "code": "VALIDATION_ERROR", "message": "Email is required" }
+}
+```
+
+## Validation
+
+- Validate request bodies at the route boundary with a schema library (Zod, Joi).
+- Return 422 with field-level errors for validation failures.
