@@ -6,13 +6,26 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { Note } from "@/data/notes";
+import {
+  getCachedNotes,
+  hasFetchedNotes,
+  markNotesFetched,
+  resolveUserId,
+  setCachedNotes,
+} from "@/lib/cache/clientCache";
 import { readNotes, writeNotes } from "@/lib/storage/indexedDb";
-import { enqueueOperation, retryFailedOperations, setSyncListener } from "@/lib/sync/queue";
-import { createClient } from "@/utils/supabase/client";
+import {
+  addSyncListener,
+  coalescePendingPost,
+  enqueueOperation,
+  removeSyncListener,
+  retryFailedOperations,
+} from "@/lib/sync/queue";
 import { apiFetch } from "@/utils/api/client";
 
 type NoteState = {
@@ -21,7 +34,7 @@ type NoteState = {
   error: string | null;
   pendingSync: number;
   failedSync: number;
-  createNote: (title: string, text: string, tag?: string | null) => void;
+  createNote: (title: string, text: string, tag?: string | null) => string | undefined;
   updateNote: (id: string, input: { title?: string; text?: string; tag?: string | null }) => void;
   deleteNote: (id: string) => void;
   getNote: (id: string) => Note | undefined;
@@ -62,60 +75,105 @@ type NoteProviderProps = {
 };
 
 export function NoteProvider({ projectId, children }: NoteProviderProps) {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedNotes = getCachedNotes(projectId);
+  const [notes, setNotes] = useState<Note[]>(cachedNotes ?? []);
+  const [loading, setLoading] = useState(!cachedNotes);
   const [error, setError] = useState<string | null>(null);
   const [pendingSync, setPendingSync] = useState(0);
   const [failedSync, setFailedSync] = useState(0);
-  const [userId, setUserId] = useState<string | null>(null);
+  const userIdRef = useRef<string | null>(null);
+  const projectIdRef = useRef(projectId);
 
   const persistNotes = useCallback(
     async (nextNotes: Note[]) => {
       setNotes(nextNotes);
+      setCachedNotes(projectIdRef.current, nextNotes);
 
-      if (userId) {
-        await writeNotes(userId, projectId, nextNotes);
+      if (userIdRef.current) {
+        await writeNotes(userIdRef.current, projectIdRef.current, nextNotes);
       }
     },
-    [projectId, userId]
+    []
   );
 
-  const hydrateFromApi = useCallback(
-    async (currentUserId: string) => {
-      const cached = (await readNotes(currentUserId, projectId)) as Note[];
-      setNotes(cached);
-      setLoading(false);
+  const fetchRemoteNotes = useCallback(async (currentUserId: string, currentProjectId: string) => {
+    const remote = await apiFetch<Note[]>(`/api/v1/notes?projectId=${currentProjectId}`);
+    setNotes(remote);
+    setCachedNotes(currentProjectId, remote);
+    markNotesFetched(currentProjectId);
+    await writeNotes(currentUserId, currentProjectId, remote);
+    setError(null);
+  }, []);
+
+  const hydrateNotes = useCallback(
+    async (currentUserId: string, currentProjectId: string, forceRemote: boolean) => {
+      const memoryCached = getCachedNotes(currentProjectId);
+
+      if (memoryCached) {
+        setNotes(memoryCached);
+        setLoading(false);
+
+        if (!forceRemote && hasFetchedNotes(currentProjectId)) {
+          return;
+        }
+      }
+
+      const idbCached = (await readNotes(currentUserId, currentProjectId)) as Note[];
+
+      if (idbCached.length > 0) {
+        setNotes(idbCached);
+        setCachedNotes(currentProjectId, idbCached);
+        setLoading(false);
+
+        if (!forceRemote && hasFetchedNotes(currentProjectId)) {
+          return;
+        }
+      }
+
+      if (!forceRemote && hasFetchedNotes(currentProjectId)) {
+        setLoading(false);
+        return;
+      }
 
       try {
-        const remote = await apiFetch<Note[]>(`/api/v1/notes?projectId=${projectId}`);
-        setNotes(remote);
-        await writeNotes(currentUserId, projectId, remote);
-        setError(null);
+        await fetchRemoteNotes(currentUserId, currentProjectId);
       } catch (hydrateError) {
-        const message = hydrateError instanceof Error ? hydrateError.message : "Failed to load notes";
-        setError(cached.length === 0 ? message : null);
+        const message =
+          hydrateError instanceof Error ? hydrateError.message : "Failed to load notes";
+        setError(idbCached.length === 0 && !memoryCached ? message : null);
+      } finally {
+        setLoading(false);
       }
     },
-    [projectId]
+    [fetchRemoteNotes]
   );
 
   useEffect(() => {
-    const supabase = createClient();
+    projectIdRef.current = projectId;
 
-    void supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUserId(data.user.id);
-        void hydrateFromApi(data.user.id);
-      } else {
+    let cancelled = false;
+
+    void resolveUserId().then((resolvedUserId) => {
+      if (cancelled) {
+        return;
+      }
+
+      if (!resolvedUserId) {
         setLoading(false);
         setError("Not authenticated");
+        return;
       }
+
+      userIdRef.current = resolvedUserId;
+      void hydrateNotes(resolvedUserId, projectId, false);
     });
 
-    setSyncListener((pending, failed) => {
+    const syncListener = (pending: number, failed: number) => {
       setPendingSync(pending);
       setFailedSync(failed);
-    });
+    };
+
+    addSyncListener(syncListener);
 
     function handleSyncResolved(event: Event) {
       const detail = (event as CustomEvent<{
@@ -126,7 +184,7 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
         data: Record<string, unknown>;
       }>).detail;
 
-      if (detail.entityType !== "note" || detail.projectId !== projectId) {
+      if (detail.entityType !== "note" || detail.projectId !== projectIdRef.current) {
         return;
       }
 
@@ -143,8 +201,10 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
           } as Note;
         });
 
-        if (userId) {
-          void writeNotes(userId, projectId, next);
+        setCachedNotes(projectIdRef.current, next);
+
+        if (userIdRef.current) {
+          void writeNotes(userIdRef.current, projectIdRef.current, next);
         }
 
         return next;
@@ -154,18 +214,21 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
     window.addEventListener("notos:sync-resolved", handleSyncResolved);
 
     return () => {
-      setSyncListener(null);
+      cancelled = true;
+      removeSyncListener(syncListener);
       window.removeEventListener("notos:sync-resolved", handleSyncResolved);
     };
-  }, [hydrateFromApi, projectId, userId]);
+  }, [hydrateNotes, projectId]);
 
   const createNote = useCallback(
     (title: string, text: string, tag?: string | null) => {
-      if (!userId) {
-        return;
+      const currentUserId = userIdRef.current;
+
+      if (!currentUserId) {
+        return undefined;
       }
 
-      const optimistic = createTempNote(projectId, userId, title, text, tag);
+      const optimistic = createTempNote(projectIdRef.current, currentUserId, title, text, tag);
       const next = [optimistic, ...notes];
       void persistNotes(next);
 
@@ -174,17 +237,19 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
         method: "POST",
         url: "/api/v1/notes",
         body: {
-          projectId,
+          projectId: projectIdRef.current,
           title,
           text,
           tag: tag ?? null,
         },
         entityType: "note",
         tempId: optimistic.id,
-        projectId,
+        projectId: projectIdRef.current,
       });
+
+      return optimistic.id;
     },
-    [notes, persistNotes, projectId, userId]
+    [notes, persistNotes]
   );
 
   const updateNote = useCallback(
@@ -203,6 +268,16 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
       void persistNotes(next);
 
       if (isTempId(id)) {
+        const updated = next.find((note) => note.id === id);
+
+        if (updated) {
+          coalescePendingPost(id, {
+            title: updated.title,
+            text: updated.text,
+            tag: updated.tag,
+          });
+        }
+
         return;
       }
 
@@ -212,10 +287,10 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
         url: `/api/v1/notes/${id}`,
         body: input,
         entityType: "note",
-        projectId,
+        projectId: projectIdRef.current,
       });
     },
-    [notes, persistNotes, projectId]
+    [notes, persistNotes]
   );
 
   const deleteNote = useCallback(
@@ -233,10 +308,10 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
         url: `/api/v1/notes/${id}`,
         body: { deleted_at: new Date().toISOString() },
         entityType: "note",
-        projectId,
+        projectId: projectIdRef.current,
       });
     },
-    [notes, persistNotes, projectId]
+    [notes, persistNotes]
   );
 
   const getNote = useCallback(
@@ -247,14 +322,14 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
   );
 
   const refreshNotes = useCallback(async () => {
-    if (!userId) {
+    if (!userIdRef.current) {
       return;
     }
 
-    setLoading(true);
-    await hydrateFromApi(userId);
+    setLoading(notes.length === 0);
+    await hydrateNotes(userIdRef.current, projectIdRef.current, true);
     setLoading(false);
-  }, [hydrateFromApi, userId]);
+  }, [hydrateNotes, notes.length]);
 
   const value = useMemo(
     () => ({

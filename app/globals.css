@@ -54,8 +54,8 @@
   --text-glowing-white: #ffffff;
   --text-dim: #666666;
   --text-body-muted: #e0e0e0;
-  --glow-subtle: 0 0 8px rgba(255, 255, 255, 0.3);
-  --glow-intense: 0 0 15px rgba(255, 255, 255, 0.8);
+  --glow-subtle: 0 0 4px rgba(255, 255, 255, 0.15);
+  --glow-intense: 0 0 8px rgba(255, 255, 255, 0.35);
   --border-dim: 1px solid rgba(255, 255, 255, 0.15);
   --border-glow: 1px solid rgba(255, 255, 255, 0.6);
   --background: var(--bg-pure-black);
@@ -81,7 +81,7 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --radius: 0;
   --sidebar: var(--bg-panel);
   --sidebar-foreground: var(--text-glowing-white);
   --sidebar-primary: var(--text-glowing-white);
@@ -101,6 +101,12 @@
   }
   html {
     @apply font-sans;
+  }
+  button,
+  a,
+  [role="button"],
+  summary {
+    cursor: pointer;
   }
 }
 
@@ -152,6 +158,11 @@
   .glow-border {
     border: var(--border-glow);
     box-shadow: var(--glow-subtle);
+    transition: box-shadow 0.2s ease, text-shadow 0.2s ease;
+  }
+
+  .glow-border:hover {
+    box-shadow: var(--glow-subtle);
   }
 
   .list-header {
@@ -160,11 +171,15 @@
   }
 
   .list-row {
-    @apply border-b border-white/15 py-5 last:border-b-0;
+    @apply border-b border-white/15 py-5 transition-colors last:border-b-0;
   }
 
-  .list-row-button {
-    @apply flex-1 text-left text-lg font-normal transition-colors hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50;
+  .list-row-interactive {
+    @apply w-full cursor-pointer text-left hover:bg-white/5 focus-visible:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50;
+  }
+
+  .list-row-title {
+    @apply text-lg font-normal;
   }
 
   .input-bare {
@@ -177,5 +192,20 @@
 
   .input-bare:focus {
     outline: none;
+  }
+
+  .input-edit {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+    color: var(--text-glowing-white);
+    font-family: inherit;
+    width: 100%;
+    padding-bottom: 0.25rem;
+  }
+
+  .input-edit:focus {
+    outline: none;
+    border-bottom-color: rgba(255, 255, 255, 0.85);
   }
 }

@@ -6,13 +6,20 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { ProjectWithCount } from "@/data/projects";
+import {
+  getCachedProjects,
+  hasFetchedProjects,
+  markProjectsFetched,
+  resolveUserId,
+  setCachedProjects,
+} from "@/lib/cache/clientCache";
 import { readProjects, writeProjects } from "@/lib/storage/indexedDb";
-import { enqueueOperation, retryFailedOperations, setSyncListener } from "@/lib/sync/queue";
-import { createClient } from "@/utils/supabase/client";
+import { addSyncListener, enqueueOperation, removeSyncListener, retryFailedOperations } from "@/lib/sync/queue";
 import { apiFetch } from "@/utils/api/client";
 
 type ProjectState = {
@@ -48,57 +55,100 @@ function createTempProject(name: string, userId: string): ProjectWithCount {
 }
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
-  const [projects, setProjects] = useState<ProjectWithCount[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedProjects = getCachedProjects();
+  const [projects, setProjects] = useState<ProjectWithCount[]>(cachedProjects ?? []);
+  const [loading, setLoading] = useState(!cachedProjects);
   const [error, setError] = useState<string | null>(null);
   const [pendingSync, setPendingSync] = useState(0);
   const [failedSync, setFailedSync] = useState(0);
-  const [userId, setUserId] = useState<string | null>(null);
+  const userIdRef = useRef<string | null>(null);
+  const bootstrapStartedRef = useRef(false);
 
-  const persistProjects = useCallback(
-    async (nextProjects: ProjectWithCount[]) => {
-      setProjects(nextProjects);
+  const persistProjects = useCallback(async (nextProjects: ProjectWithCount[]) => {
+    setProjects(nextProjects);
+    setCachedProjects(nextProjects);
 
-      if (userId) {
-        await writeProjects(userId, nextProjects);
-      }
-    },
-    [userId]
-  );
-
-  const hydrateFromApi = useCallback(async (currentUserId: string) => {
-    const cached = (await readProjects(currentUserId)) as ProjectWithCount[];
-    setProjects(cached);
-    setLoading(false);
-
-    try {
-      const remote = await apiFetch<ProjectWithCount[]>("/api/v1/projects");
-      setProjects(remote);
-      await writeProjects(currentUserId, remote);
-      setError(null);
-    } catch (hydrateError) {
-      const message = hydrateError instanceof Error ? hydrateError.message : "Failed to load projects";
-      setError(cached.length === 0 ? message : null);
+    if (userIdRef.current) {
+      await writeProjects(userIdRef.current, nextProjects);
     }
   }, []);
 
-  useEffect(() => {
-    const supabase = createClient();
+  const fetchRemoteProjects = useCallback(async (currentUserId: string) => {
+    const remote = await apiFetch<ProjectWithCount[]>("/api/v1/projects");
+    setProjects(remote);
+    setCachedProjects(remote);
+    markProjectsFetched();
+    await writeProjects(currentUserId, remote);
+    setError(null);
+  }, []);
 
-    void supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUserId(data.user.id);
-        void hydrateFromApi(data.user.id);
-      } else {
+  const hydrateProjects = useCallback(
+    async (currentUserId: string, forceRemote: boolean) => {
+      const memoryCached = getCachedProjects();
+
+      if (memoryCached) {
+        setProjects(memoryCached);
+        setLoading(false);
+
+        if (!forceRemote && hasFetchedProjects()) {
+          return;
+        }
+      }
+
+      const idbCached = (await readProjects(currentUserId)) as ProjectWithCount[];
+
+      if (idbCached.length > 0) {
+        setProjects(idbCached);
+        setCachedProjects(idbCached);
+        setLoading(false);
+
+        if (!forceRemote && hasFetchedProjects()) {
+          return;
+        }
+      }
+
+      if (!forceRemote && hasFetchedProjects()) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        await fetchRemoteProjects(currentUserId);
+      } catch (hydrateError) {
+        const message =
+          hydrateError instanceof Error ? hydrateError.message : "Failed to load projects";
+        setError(idbCached.length === 0 && !memoryCached ? message : null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchRemoteProjects]
+  );
+
+  useEffect(() => {
+    if (bootstrapStartedRef.current) {
+      return;
+    }
+
+    bootstrapStartedRef.current = true;
+
+    void resolveUserId().then((resolvedUserId) => {
+      if (!resolvedUserId) {
         setLoading(false);
         setError("Not authenticated");
+        return;
       }
+
+      userIdRef.current = resolvedUserId;
+      void hydrateProjects(resolvedUserId, false);
     });
 
-    setSyncListener((pending, failed) => {
+    const syncListener = (pending: number, failed: number) => {
       setPendingSync(pending);
       setFailedSync(failed);
-    });
+    };
+
+    addSyncListener(syncListener);
 
     function handleSyncResolved(event: Event) {
       const detail = (event as CustomEvent<{
@@ -126,8 +176,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
           } as ProjectWithCount;
         });
 
-        if (userId) {
-          void writeProjects(userId, next);
+        setCachedProjects(next);
+
+        if (userIdRef.current) {
+          void writeProjects(userIdRef.current, next);
         }
 
         return next;
@@ -137,18 +189,20 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     window.addEventListener("notos:sync-resolved", handleSyncResolved);
 
     return () => {
-      setSyncListener(null);
+      removeSyncListener(syncListener);
       window.removeEventListener("notos:sync-resolved", handleSyncResolved);
     };
-  }, [hydrateFromApi, userId]);
+  }, [hydrateProjects]);
 
   const createProject = useCallback(
     (name: string) => {
-      if (!userId) {
+      const currentUserId = userIdRef.current;
+
+      if (!currentUserId) {
         return;
       }
 
-      const optimistic = createTempProject(name, userId);
+      const optimistic = createTempProject(name, currentUserId);
       const next = [optimistic, ...projects];
       void persistProjects(next);
 
@@ -161,7 +215,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         tempId: optimistic.id,
       });
     },
-    [persistProjects, projects, userId]
+    [persistProjects, projects]
   );
 
   const updateProject = useCallback(
@@ -215,14 +269,14 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   );
 
   const refreshProjects = useCallback(async () => {
-    if (!userId) {
+    if (!userIdRef.current) {
       return;
     }
 
-    setLoading(true);
-    await hydrateFromApi(userId);
+    setLoading(projects.length === 0);
+    await hydrateProjects(userIdRef.current, true);
     setLoading(false);
-  }, [hydrateFromApi, userId]);
+  }, [hydrateProjects, projects.length]);
 
   const value = useMemo(
     () => ({

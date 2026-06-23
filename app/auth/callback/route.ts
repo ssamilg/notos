@@ -1,3 +1,4 @@
+import { initializeUser } from '@/services/userInit';
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 
@@ -9,11 +10,12 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-    if (!error) {
+    if (!error && data.user) {
+      await initializeUser(supabase, data.user.id);
       response = NextResponse.redirect(`${origin}${next}`);
-    } else {
+    } else if (error) {
       response = NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`);
     }
   }

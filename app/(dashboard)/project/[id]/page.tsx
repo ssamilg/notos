@@ -4,30 +4,32 @@ import { useParams, useRouter } from "next/navigation";
 import { useProjects } from "@/context/ProjectProvider";
 import { useNotes } from "@/context/NoteProvider";
 import { NoteList } from "./_components/NoteList";
-import { LiveStatus } from "@/components/a11y/LiveStatus";
+import { NoteListSkeleton } from "@/components/skeletons/NoteListSkeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ProjectNotesPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { projects, loading: projectsLoading } = useProjects();
-  const { notes, loading: notesLoading, error, deleteNote } = useNotes();
+  const { projects, loading: projectsLoading, updateProject } = useProjects();
+  const { notes, loading: notesLoading, error, createNote } = useNotes();
 
   const project = projects.find((item) => item.id === params.id);
-  const isLoading = projectsLoading || notesLoading;
+
+  const showSkeleton =
+    (notesLoading && notes.length === 0) || (projectsLoading && projects.length === 0);
 
   let content = (
     <NoteList
       projectName={project?.name ?? "Project"}
       notes={notes}
       onSelectNote={(noteId) => router.push(`/project/${params.id}/note/${noteId}`)}
-      onOpenCanvas={() => router.push(`/project/${params.id}/canvas`)}
-      onDeleteNote={deleteNote}
+      onCreateNote={() => createNote("Untitled", "", null)}
+      onRenameProject={(name) => updateProject(params.id, name)}
     />
   );
 
-  if (isLoading) {
-    content = <LiveStatus message="Loading notes…" />;
+  if (showSkeleton) {
+    content = <NoteListSkeleton />;
   }
 
   if (error && notes.length === 0) {

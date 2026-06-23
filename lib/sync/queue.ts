@@ -14,24 +14,61 @@ type SyncListener = (pending: number, failed: number) => void;
 
 const queue: SyncOperation[] = [];
 const failedIds = new Set<string>();
+const listeners = new Set<SyncListener>();
 let processing = false;
-let listener: SyncListener | null = null;
+
+export function addSyncListener(listener: SyncListener) {
+  listeners.add(listener);
+  notifyListeners();
+}
+
+export function removeSyncListener(listener: SyncListener) {
+  listeners.delete(listener);
+}
 
 export function setSyncListener(nextListener: SyncListener | null) {
-  listener = nextListener;
-  notifyListener();
+  listeners.clear();
+
+  if (nextListener) {
+    listeners.add(nextListener);
+    notifyListeners();
+  }
+}
+
+function notifyListeners() {
+  listeners.forEach((listener) => {
+    listener(queue.length, failedIds.size);
+  });
 }
 
 function notifyListener() {
-  if (listener) {
-    listener(queue.length, failedIds.size);
-  }
+  notifyListeners();
 }
 
 export function enqueueOperation(operation: SyncOperation) {
   queue.push(operation);
   notifyListener();
   void processQueue();
+}
+
+export function coalescePendingPost(tempId: string, body: Record<string, unknown>) {
+  const index = queue.findIndex(
+    (operation) => operation.method === 'POST' && operation.tempId === tempId
+  );
+  let coalesced = false;
+
+  if (index !== -1) {
+    queue[index] = {
+      ...queue[index],
+      body: {
+        ...queue[index].body,
+        ...body,
+      },
+    };
+    coalesced = true;
+  }
+
+  return coalesced;
 }
 
 export async function processQueue() {

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useProjects } from "@/context/ProjectProvider";
 import { ProjectList } from "@/app/(dashboard)/_components/ProjectList";
-import { LiveStatus } from "@/components/a11y/LiveStatus";
+import { ProjectListSkeleton } from "@/components/skeletons/ProjectListSkeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -16,8 +16,6 @@ export function ProjectDashboard() {
     error,
     failedSync,
     createProject,
-    updateProject,
-    deleteProject,
     retrySync,
   } = useProjects();
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -61,14 +59,12 @@ export function ProjectDashboard() {
           setNewName("");
         }}
         onSelect={(id) => router.push(`/project/${id}`)}
-        onEdit={updateProject}
-        onDelete={deleteProject}
       />
     </div>
   );
 
-  if (loading) {
-    content = <LiveStatus message="Loading projects…" />;
+  if (loading && projects.length === 0) {
+    content = <ProjectListSkeleton />;
   }
 
   if (error && projects.length === 0) {

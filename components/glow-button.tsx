@@ -9,7 +9,7 @@ export function GlowButton({ className, variant = "outline", ...props }: GlowBut
     <Button
       variant={variant}
       className={cn(
-        "uppercase tracking-wider glow-border hover:shadow-[var(--glow-intense)] hover:glow-text",
+        "text-label glow-border uppercase tracking-wider hover:glow-text",
         className
       )}
       {...props}

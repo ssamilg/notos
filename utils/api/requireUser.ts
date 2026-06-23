@@ -1,4 +1,3 @@
-import { initializeUser } from '@/services/userInit';
 import { createClient } from '@/utils/supabase/server';
 
 export async function requireUser() {
@@ -7,10 +6,6 @@ export async function requireUser() {
     data: { user },
     error,
   } = await supabase.auth.getUser();
-
-  if (user && !error) {
-    await initializeUser(supabase, user.id);
-  }
 
   return { supabase, user, error };
 }

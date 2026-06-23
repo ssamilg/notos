@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId } from "react";
 import type { ProjectWithCount } from "@/data/projects";
-import { formatDate } from "@/utils/formatDate";
+import { DateDisplay } from "@/components/DateDisplay";
 import { GlowButton } from "@/components/glow-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +18,6 @@ type ProjectListProps = {
   onCreate: (event: React.FormEvent<HTMLFormElement>) => void;
   onCancelCreate: () => void;
   onSelect: (id: string) => void;
-  onEdit: (id: string, name: string) => void;
-  onDelete: (id: string) => void;
 };
 
 export function ProjectList({
@@ -31,14 +29,10 @@ export function ProjectList({
   onCreate,
   onCancelCreate,
   onSelect,
-  onEdit,
-  onDelete,
 }: ProjectListProps) {
   const headingId = useId();
   const createFormId = useId();
   const nameInputId = useId();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
 
   useEffect(() => {
     if (showCreateForm) {
@@ -46,89 +40,26 @@ export function ProjectList({
     }
   }, [showCreateForm, nameInputId]);
 
-  function startEdit(project: ProjectWithCount) {
-    setEditingId(project.id);
-    setEditName(project.name);
-  }
-
-  function saveEdit(id: string) {
-    const trimmed = editName.trim();
-
-    if (!trimmed) {
-      return;
-    }
-
-    onEdit(id, trimmed);
-    setEditingId(null);
-    setEditName("");
-  }
-
   let listBody = (
     <ul className="list-none p-0">
-      {projects.map((project) => {
-        let row = (
-          <div className="flex flex-1 cursor-pointer items-center justify-between gap-4">
-            <button
-              type="button"
-              className="list-row-button"
-              onClick={() => onSelect(project.id)}
-            >
-              {project.name}
-            </button>
-            <div className="text-caption shrink-0 text-right">
-              <span className="ml-5 inline-block">
+      {projects.map((project) => (
+        <li key={project.id}>
+          <button
+            type="button"
+            className="list-row list-row-interactive flex items-center justify-between gap-4"
+            onClick={() => onSelect(project.id)}
+          >
+            <span className="list-row-title">{project.name}</span>
+            <div className="text-caption flex shrink-0 items-center gap-2">
+              <span>
                 {project.note_count} {project.note_count === 1 ? "Note" : "Notes"}
               </span>
-              <span className="ml-5 inline-block">Updated: {formatDate(project.updated_at)}</span>
+              <span aria-hidden="true">|</span>
+              <DateDisplay updatedAt={project.updated_at} createdAt={project.created_at} />
             </div>
-          </div>
-        );
-
-        if (editingId === project.id) {
-          row = (
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Input
-                value={editName}
-                onChange={(event) => setEditName(event.target.value)}
-                aria-label={`Edit ${project.name}`}
-              />
-              <div className="flex gap-2">
-                <Button type="button" size="sm" onClick={() => saveEdit(project.id)}>
-                  Save
-                </Button>
-                <Button type="button" size="sm" variant="outline" onClick={() => setEditingId(null)}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          );
-        }
-
-        return (
-          <li
-            key={project.id}
-            className="list-row flex flex-col gap-3 sm:flex-row sm:items-center"
-          >
-            {row}
-            {editingId !== project.id ? (
-              <div className="flex gap-2 sm:ml-4">
-                <Button type="button" variant="ghost" size="xs" onClick={() => startEdit(project)}>
-                  Edit
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => onDelete(project.id)}
-                >
-                  Delete
-                </Button>
-              </div>
-            ) : null}
-          </li>
-        );
-      })}
+          </button>
+        </li>
+      ))}
     </ul>
   );
 
@@ -157,7 +88,7 @@ export function ProjectList({
         <form
           id={createFormId}
           onSubmit={onCreate}
-          className="mb-6 flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
+          className="mb-6 flex flex-col gap-3 border border-border bg-card p-4"
           aria-labelledby={headingId}
         >
           <div className="flex flex-col gap-2">
