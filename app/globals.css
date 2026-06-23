@@ -56,8 +56,9 @@
   --text-body-muted: #e0e0e0;
   --glow-subtle: 0 0 4px rgba(255, 255, 255, 0.35);
   --glow-intense: 0 0 8px rgba(255, 255, 255, 0.55);
+  --glow-full: 0 0 8px rgba(255, 255, 255, 0.70);
   --border-dim: 1px solid rgba(255, 255, 255, 0.15);
-  --border-glow: 1px solid rgba(255, 255, 255, 0.6);
+  --border-glow: 1px solid rgba(255, 255, 255, 0.7);
   --background: var(--bg-pure-black);
   --foreground: var(--text-glowing-white);
   --card: var(--bg-panel);
@@ -105,8 +106,14 @@
   button,
   a,
   [role="button"],
-  summary {
+  summary,
+  [data-slot="button"] {
     cursor: pointer;
+  }
+
+  button:disabled,
+  [data-slot="button"][disabled] {
+    cursor: not-allowed;
   }
 }
 
@@ -159,10 +166,10 @@
     border: var(--border-glow);
     box-shadow: var(--glow-subtle);
     transition: box-shadow 0.2s ease, text-shadow 0.2s ease;
-  }
 
-  .glow-border:hover {
-    box-shadow: var(--glow-subtle);
+    &:hover {
+      box-shadow: var(--glow-intense);
+    }
   }
 
   .list-header {
@@ -170,7 +177,7 @@
   }
 
   .list-row {
-    @apply border-b border-white/15 py-5 hover:border-l-4 hover:pl-4 hover:border-l-white/75 transition-all duration-300;
+    @apply cursor-pointer border-b border-white/15 py-5 transition-all duration-300 hover:border-l-4 hover:border-l-white/75 hover:px-4;
   }
 
   .list-row:hover {
