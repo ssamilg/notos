@@ -46,7 +46,9 @@ export default function NoteDetailPage() {
         detail.tempId === params.noteId &&
         detail.projectId === params.id
       ) {
-        router.replace(`/project/${params.id}/note/${detail.serverId}`);
+        queueMicrotask(() => {
+          router.replace(`/project/${params.id}/note/${detail.serverId}`);
+        });
       }
     }
 
@@ -74,8 +76,7 @@ export default function NoteDetailPage() {
     updateNote(params.noteId, input);
   }
 
-  const showSkeleton =
-    isDeleting || isPendingNote(params.id, params.noteId) || !ready || !note;
+  const showSkeleton = isDeleting || (!note && (isPendingNote(params.id, params.noteId) || !ready));
 
   let content = <NoteDetailSkeleton />;
 
@@ -84,7 +85,7 @@ export default function NoteDetailPage() {
   } else if (note) {
     content = (
       <NoteDetail
-        key={`${params.noteId}-${isDraft ? "draft" : "saved"}`}
+        key={params.noteId}
         note={note}
         projectId={params.id}
         isDraft={isDraft}

@@ -33,7 +33,7 @@ export default function ProjectNotesPage() {
     return noteId;
   }
 
-  const showSkeleton = isPendingNotes(params.id) || !notesReady;
+  const showSkeleton = (isPendingNotes(params.id) || !notesReady) && notes.length === 0;
 
   let content = (
     <NoteList

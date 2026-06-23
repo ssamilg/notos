@@ -95,6 +95,7 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
   const [failedSync, setFailedSync] = useState(0);
   const userIdRef = useRef<string | null>(null);
   const projectIdRef = useRef(projectId);
+  const noteIdAliasRef = useRef<Record<string, string>>({});
 
   const persistNotes = useCallback(async (nextNotes: Note[]) => {
     setNotes(nextNotes);
@@ -201,6 +202,8 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
       if (detail.entityType !== "note" || detail.projectId !== projectIdRef.current) {
         return;
       }
+
+      noteIdAliasRef.current[detail.tempId] = detail.serverId;
 
       setNotes((current) => {
         const next = current.map((note) => {
@@ -372,7 +375,19 @@ export function NoteProvider({ projectId, children }: NoteProviderProps) {
         return draftNotes[id];
       }
 
-      return notes.find((note) => note.id === id);
+      const direct = notes.find((note) => note.id === id);
+
+      if (direct) {
+        return direct;
+      }
+
+      const aliasedId = noteIdAliasRef.current[id];
+
+      if (aliasedId) {
+        return notes.find((note) => note.id === aliasedId);
+      }
+
+      return undefined;
     },
     [draftNotes, notes]
   );

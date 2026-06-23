@@ -50,7 +50,7 @@ export function ProjectDashboard() {
     setIsCreating(false);
   }
 
-  const showSkeleton = isPendingProjects || !ready;
+  const showSkeleton = (isPendingProjects || !ready) && projects.length === 0;
 
   let content = (
     <div>
