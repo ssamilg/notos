@@ -10,6 +10,7 @@ import { TagAutocomplete } from "@/components/TagAutocomplete";
 import { TagLabel } from "@/components/TagLabel";
 import { GlowButton } from "@/components/glow-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { stripMarkdown } from "@/utils/stripMarkdown";
 import { truncateText } from "@/utils/truncateText";
 
 type NoteListProps = {
@@ -176,7 +177,9 @@ export function NoteList({
                   note.is_completed ? "text-muted-foreground line-through" : "text-muted-foreground"
                 }`}
               >
-                {note.text.trim() ? truncateText(note.text, 120) : "No content"}
+                {note.text.trim()
+                  ? truncateText(stripMarkdown(note.text), 120)
+                  : "No content"}
               </span>
               <DateDisplay
                 updatedAt={note.updated_at}
