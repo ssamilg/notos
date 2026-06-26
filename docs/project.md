@@ -39,3 +39,4 @@ NOTOS is a minimal note-taking app that allows you to create, read, update, and 
 - 2026-06-26: Note URLs changed to /note/:id instead of nested /project/:id/note/:id paths.
 - 2026-06-26: Dashboard navigation moved client-side with pushState so in-app route changes skip Next RSC fetches.
 - 2026-06-26: React Query session cache staleTime set to 30 minutes; mutations invalidate and refetch related queries after success.
+- 2026-06-27: Markdown support issues fixed and some minor ui improvements made.
