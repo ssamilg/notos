@@ -240,9 +240,9 @@ export function NoteList({
         <input
           key={urlSearch}
           ref={searchInputRef}
-          className="input-bare text-body flex-1"
+          className="input-bare text-body flex-1 border-b! border-b-white/60! focus-visible:border-b-white!"
           defaultValue={urlSearch}
-          placeholder="Search notes…"
+          placeholder="> Search notes…"
           aria-label="Search notes"
           tabIndex={0}
         />

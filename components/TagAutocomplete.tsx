@@ -21,7 +21,7 @@ export function TagAutocomplete({
   tags,
   value,
   onValueChange,
-  placeholder = "Filter by tag…",
+  placeholder = "[Filter by tag]",
   className,
   inputClassName,
 }: TagAutocompleteProps) {
@@ -189,7 +189,7 @@ export function TagAutocomplete({
     } else {
       dropdown = (
         <div className="absolute top-full z-20 mt-1 w-full overflow-hidden rounded-lg border border-border bg-background shadow-lg">
-          <ul id={listboxId} role="listbox" className="max-h-48 list-none overflow-y-auto p-1">
+          <ul id={listboxId} role="listbox" className="max-h-88 list-none overflow-y-auto p-1">
             {options}
           </ul>
         </div>
@@ -206,7 +206,7 @@ export function TagAutocomplete({
         aria-expanded={isOpen}
         aria-controls={listboxId}
         aria-autocomplete="list"
-        className={cn("input-bare text-body w-full", inputClassName)}
+        className={cn("input-bare text-body w-full border-b! border-b-white/60! focus-visible:border-b-white!", inputClassName)}
         value={inputValue}
         placeholder={placeholder}
         onChange={handleInputChange}
