@@ -1,14 +1,14 @@
-import { ProjectProvider } from "@/context/ProjectProvider";
+import { DashboardBootstrap } from "./_components/DashboardBootstrap";
 import { DashboardShell } from "./_components/DashboardShell";
 
 export default function DashboardLayout({
-  children,
+  children: _children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <ProjectProvider>
-      <DashboardShell>{children}</DashboardShell>
-    </ProjectProvider>
+    <DashboardBootstrap>
+      <DashboardShell />
+    </DashboardBootstrap>
   );
 }
