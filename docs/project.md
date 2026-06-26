@@ -31,3 +31,11 @@ NOTOS is a minimal note-taking app that allows you to create, read, update, and 
 - 2026-06-23: Draft note flow added — new notes save only when you hit Save.
 - 2026-06-23: Note detail uses Edit/Save/Cancel instead of autosave.
 - 2026-06-23: Navigation skeletons show on click but stay silent during background sync.
+- 2026-06-26: Tags, note completion, and note search/filtering added across DB, API, and UI.
+- 2026-06-26: React Query replaced custom context, IndexedDB cache, and sync queue.
+- 2026-06-26: Client-generated UUIDs required on project and note create; API returns 409 on duplicate IDs.
+- 2026-06-26: Optimistic mutations added for projects, notes, and tags with rollback and toast on error.
+- 2026-06-26: GET /api/v1/notes/:id added; note detail reads from its own query instead of the project notes list.
+- 2026-06-26: Note URLs changed to /note/:id instead of nested /project/:id/note/:id paths.
+- 2026-06-26: Dashboard navigation moved client-side with pushState so in-app route changes skip Next RSC fetches.
+- 2026-06-26: React Query session cache staleTime set to 30 minutes; mutations invalidate and refetch related queries after success.
