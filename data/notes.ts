@@ -1,97 +1,234 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/database.types';
-import { formatSupabaseError } from '@/utils/supabase/errors';
+import { findOrCreateTags, syncNoteTags } from '@/data/tags';
+import { formatSupabaseError, throwSupabaseError } from '@/utils/supabase/errors';
 
-type Note = Database['public']['Tables']['notes']['Row'];
+type NoteRow = Database['public']['Tables']['notes']['Row'];
+
+export type NoteWithTags = NoteRow & {
+  tags: string[];
+};
 
 export type NoteUpdateInput = {
   title?: string;
   text?: string;
-  tag?: string | null;
+  tags?: string[];
+  is_completed?: boolean;
   deleted_at?: string | null;
 };
 
-export async function getNotes(
+export type NotesQueryInput = {
+  projectId: string;
+  cursor?: string;
+  search?: string;
+  tagId?: string;
+  limit?: number;
+};
+
+export type NotesQueryResult = {
+  notes: NoteWithTags[];
+  nextCursor: string | null;
+};
+
+type NoteTagRelation = {
+  tags: { name: string } | { name: string }[] | null;
+};
+
+type NoteRowWithRelations = NoteRow & {
+  note_tags?: NoteTagRelation[];
+};
+
+const DEFAULT_LIMIT = 20;
+
+function extractTagNames(noteTags: NoteTagRelation[] | undefined): string[] {
+  if (!noteTags) {
+    return [];
+  }
+
+  const names: string[] = [];
+
+  for (const link of noteTags) {
+    if (!link.tags) {
+      continue;
+    }
+
+    if (Array.isArray(link.tags)) {
+      for (const tag of link.tags) {
+        names.push(tag.name);
+      }
+    } else {
+      names.push(link.tags.name);
+    }
+  }
+
+  return [...new Set(names)].sort();
+}
+
+function mapNoteRow(row: NoteRowWithRelations): NoteWithTags {
+  const { note_tags, ...note } = row;
+
+  return {
+    ...note,
+    tags: extractTagNames(note_tags),
+  };
+}
+
+async function fetchNoteWithTags(
   supabase: SupabaseClient<Database>,
-  projectId: string
-) {
+  noteId: string
+): Promise<NoteWithTags | null> {
   const { data, error } = await supabase
     .from('notes')
-    .select('*')
-    .eq('project_id', projectId)
+    .select('*, note_tags ( tags ( name ) )')
+    .eq('id', noteId)
     .is('deleted_at', null)
-    .order('updated_at', { ascending: false });
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(formatSupabaseError(error, 'fetchNoteWithTags failed'));
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return mapNoteRow(data as NoteRowWithRelations);
+}
+
+export async function getNotes(
+  supabase: SupabaseClient<Database>,
+  input: NotesQueryInput
+): Promise<NotesQueryResult> {
+  const limit = input.limit ?? DEFAULT_LIMIT;
+  const selectClause = input.tagId
+    ? '*, note_tags!inner ( tag_id, tags ( name ) )'
+    : '*, note_tags ( tags ( name ) )';
+
+  let query = supabase
+    .from('notes')
+    .select(selectClause)
+    .eq('project_id', input.projectId)
+    .is('deleted_at', null)
+    .order('updated_at', { ascending: false })
+    .limit(limit);
+
+  if (input.tagId) {
+    query = query.eq('note_tags.tag_id', input.tagId);
+  }
+
+  if (input.cursor) {
+    query = query.lt('updated_at', input.cursor);
+  }
+
+  if (input.search && input.search.trim().length > 0) {
+    const term = `%${input.search.trim()}%`;
+    query = query.or(`title.ilike.${term},text.ilike.${term}`);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw new Error(formatSupabaseError(error, 'getNotes failed'));
   }
 
-  return data;
+  const rows = (data ?? []) as NoteRowWithRelations[];
+  const notes = rows.map(mapNoteRow);
+  let nextCursor: string | null = null;
+
+  if (notes.length === limit) {
+    nextCursor = notes[notes.length - 1]?.updated_at ?? null;
+  }
+
+  return { notes, nextCursor };
 }
 
 export async function getNoteById(
   supabase: SupabaseClient<Database>,
   noteId: string
 ) {
-  const { data, error } = await supabase
-    .from('notes')
-    .select('*')
-    .eq('id', noteId)
-    .is('deleted_at', null)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(formatSupabaseError(error, 'getNoteById failed'));
-  }
-
-  return data;
+  return fetchNoteWithTags(supabase, noteId);
 }
 
 export async function createNote(
   supabase: SupabaseClient<Database>,
   userId: string,
+  id: string,
   projectId: string,
   title: string,
   text: string,
-  tag?: string | null
-) {
+  tags?: string[],
+  isCompleted?: boolean
+): Promise<NoteWithTags> {
   const { data, error } = await supabase
     .from('notes')
     .insert({
+      id,
       title,
       text,
-      tag: tag ?? null,
       project_id: projectId,
       user_id: userId,
+      is_completed: isCompleted ?? false,
     })
     .select()
     .single();
 
   if (error) {
-    throw new Error(formatSupabaseError(error, 'createNote failed'));
+    throwSupabaseError(error, 'createNote failed');
   }
 
-  return data;
+  if (tags && tags.length > 0) {
+    const tagIds = await findOrCreateTags(supabase, userId, tags);
+
+    try {
+      await syncNoteTags(supabase, data.id, tagIds);
+    } catch (syncError) {
+      await supabase.from('notes').delete().eq('id', data.id);
+      throw syncError;
+    }
+  }
+
+  const note = await fetchNoteWithTags(supabase, data.id);
+
+  if (!note) {
+    throw new Error('createNote failed to load created note');
+  }
+
+  return note;
 }
 
 export async function updateNote(
   supabase: SupabaseClient<Database>,
   noteId: string,
+  userId: string,
   input: NoteUpdateInput
-) {
-  const { data, error } = await supabase
-    .from('notes')
-    .update(input)
-    .eq('id', noteId)
-    .is('deleted_at', null)
-    .select()
-    .single();
+): Promise<NoteWithTags> {
+  const { tags, ...noteFields } = input;
+  const hasNoteFields = Object.keys(noteFields).length > 0;
 
-  if (error) {
-    throw new Error(formatSupabaseError(error, 'updateNote failed'));
+  if (hasNoteFields) {
+    const { error } = await supabase
+      .from('notes')
+      .update(noteFields)
+      .eq('id', noteId)
+      .is('deleted_at', null);
+
+    if (error) {
+      throw new Error(formatSupabaseError(error, 'updateNote failed'));
+    }
   }
 
-  return data;
+  if (tags !== undefined) {
+    const tagIds = await findOrCreateTags(supabase, userId, tags);
+    await syncNoteTags(supabase, noteId, tagIds);
+  }
+
+  const note = await fetchNoteWithTags(supabase, noteId);
+
+  if (!note) {
+    throw new Error('updateNote failed to load updated note');
+  }
+
+  return note;
 }
 
 export async function softDeleteNote(
@@ -110,7 +247,10 @@ export async function softDeleteNote(
     throw new Error(formatSupabaseError(error, 'softDeleteNote failed'));
   }
 
-  return data;
+  return {
+    ...data,
+    tags: [] as string[],
+  };
 }
 
-export type { Note };
+export type Note = NoteWithTags;

@@ -1,5 +1,6 @@
 import {
   deleteNoteForUser,
+  getNote,
   updateNoteForUser,
 } from '@/services/notes';
 import { apiError, apiSuccess } from '@/utils/api/response';
@@ -9,6 +10,29 @@ import { requireUser } from '@/utils/api/requireUser';
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
+
+export async function GET(_request: Request, context: RouteContext) {
+  const { supabase, user, error } = await requireUser();
+
+  if (error || !user) {
+    return apiError('Unauthorized', 401);
+  }
+
+  const { id } = await context.params;
+
+  try {
+    const note = await getNote(supabase, id);
+
+    if (!note) {
+      return apiError('Note not found', 404);
+    }
+
+    return apiSuccess(note);
+  } catch (serviceError) {
+    const message = serviceError instanceof Error ? serviceError.message : 'Failed to fetch note';
+    return apiError(message, 500);
+  }
+}
 
 export async function PUT(request: Request, context: RouteContext) {
   const { supabase, user, error } = await requireUser();
@@ -39,7 +63,8 @@ export async function PUT(request: Request, context: RouteContext) {
     const payload: {
       title?: string;
       text?: string;
-      tag?: string | null;
+      tags?: string[];
+      is_completed?: boolean;
     } = {};
 
     if (parsed.data.title !== undefined) {
@@ -50,11 +75,15 @@ export async function PUT(request: Request, context: RouteContext) {
       payload.text = parsed.data.text;
     }
 
-    if (parsed.data.tag !== undefined) {
-      payload.tag = parsed.data.tag;
+    if (parsed.data.tags !== undefined) {
+      payload.tags = parsed.data.tags;
     }
 
-    const note = await updateNoteForUser(supabase, id, payload);
+    if (parsed.data.is_completed !== undefined) {
+      payload.is_completed = parsed.data.is_completed;
+    }
+
+    const note = await updateNoteForUser(supabase, id, user.id, payload);
     return apiSuccess(note);
   } catch (serviceError) {
     const message = serviceError instanceof Error ? serviceError.message : 'Failed to update note';

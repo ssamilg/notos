@@ -5,6 +5,7 @@ import {
 import { apiError, apiSuccess } from '@/utils/api/response';
 import { createProjectSchema } from '@/utils/api/schemas';
 import { requireUser } from '@/utils/api/requireUser';
+import { isUniqueViolationCode, SupabaseOperationError } from '@/utils/supabase/errors';
 
 export async function GET() {
   const { supabase, user, error } = await requireUser();
@@ -37,9 +38,18 @@ export async function POST(request: Request) {
   }
 
   try {
-    const project = await createProjectForUser(supabase, user.id, parsed.data.name);
+    const project = await createProjectForUser(
+      supabase,
+      user.id,
+      parsed.data.id,
+      parsed.data.name
+    );
     return apiSuccess(project, { status: 201 });
   } catch (serviceError) {
+    if (serviceError instanceof SupabaseOperationError && isUniqueViolationCode(serviceError.code)) {
+      return apiError('Resource already exists', 409);
+    }
+
     const message = serviceError instanceof Error ? serviceError.message : 'Failed to create project';
     return apiError(message, 500);
   }

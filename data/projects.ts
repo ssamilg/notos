@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/database.types';
-import { formatSupabaseError } from '@/utils/supabase/errors';
+import { formatSupabaseError, throwSupabaseError } from '@/utils/supabase/errors';
 
 type Project = Database['public']['Tables']['projects']['Row'];
 
@@ -97,11 +97,13 @@ export async function countActiveProjects(
 export async function createProject(
   supabase: SupabaseClient<Database>,
   userId: string,
+  id: string,
   name: string
 ) {
   const { data, error } = await supabase
     .from('projects')
     .insert({
+      id,
       name,
       user_id: userId,
     })
@@ -109,7 +111,7 @@ export async function createProject(
     .single();
 
   if (error) {
-    throw new Error(formatSupabaseError(error, 'createProject failed'));
+    throwSupabaseError(error, 'createProject failed');
   }
 
   return data;

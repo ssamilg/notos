@@ -24,9 +24,10 @@ export async function getProject(
 export async function createProjectForUser(
   supabase: SupabaseClient<Database>,
   userId: string,
+  id: string,
   name: string
 ) {
-  return createProject(supabase, userId, name);
+  return createProject(supabase, userId, id, name);
 }
 
 export async function updateProjectForUser(
@@ -52,7 +53,7 @@ export async function ensureDefaultProject(
   let project = null;
 
   if (activeCount === 0) {
-    project = await createProject(supabase, userId, 'Default');
+    project = await createProject(supabase, userId, crypto.randomUUID(), 'Default');
   }
 
   return project;

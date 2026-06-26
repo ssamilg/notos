@@ -7,13 +7,14 @@ import {
   softDeleteNote,
   updateNote,
   type NoteUpdateInput,
+  type NotesQueryInput,
 } from '@/data/notes';
 
 export async function listNotes(
   supabase: SupabaseClient<Database>,
-  projectId: string
+  input: NotesQueryInput
 ) {
-  return getNotes(supabase, projectId);
+  return getNotes(supabase, input);
 }
 
 export async function getNote(
@@ -26,20 +27,23 @@ export async function getNote(
 export async function createNoteForUser(
   supabase: SupabaseClient<Database>,
   userId: string,
+  id: string,
   projectId: string,
   title: string,
   text: string,
-  tag?: string | null
+  tags?: string[],
+  isCompleted?: boolean
 ) {
-  return createNote(supabase, userId, projectId, title, text, tag);
+  return createNote(supabase, userId, id, projectId, title, text, tags, isCompleted);
 }
 
 export async function updateNoteForUser(
   supabase: SupabaseClient<Database>,
   noteId: string,
+  userId: string,
   input: NoteUpdateInput
 ) {
-  return updateNote(supabase, noteId, input);
+  return updateNote(supabase, noteId, userId, input);
 }
 
 export async function deleteNoteForUser(
