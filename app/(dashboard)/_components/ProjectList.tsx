@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { ProjectWithCount } from "@/data/projects";
 import { DateDisplay } from "@/components/DateDisplay";
 import { GlowButton } from "@/components/glow-button";
@@ -10,7 +10,6 @@ type ProjectListProps = {
   projects: ProjectWithCount[];
   isCreating: boolean;
   draftName: string;
-  onStartCreate: () => void;
   onCancelCreate: () => void;
   onDraftNameChange: (value: string) => void;
   onSaveCreate: () => void;
@@ -21,13 +20,11 @@ export function ProjectList({
   projects,
   isCreating,
   draftName,
-  onStartCreate,
   onCancelCreate,
   onDraftNameChange,
   onSaveCreate,
   onSelect,
 }: ProjectListProps) {
-  const headingId = useId();
   const nameInputRef = useRef<HTMLInputElement>(null);
   const saveClickedRef = useRef(false);
 
@@ -132,20 +129,6 @@ export function ProjectList({
   }
 
   return (
-    <div>
-      <div className="list-header">
-        <h1 id={headingId} className="text-heading glow-text">
-          Projects
-        </h1>
-        <GlowButton
-          type="button"
-          onClick={isCreating ? onCancelCreate : onStartCreate}
-        >
-          {isCreating ? "Cancel" : "+ New Project"}
-        </GlowButton>
-      </div>
-
-      <section aria-labelledby={headingId}>{listBody}</section>
-    </div>
+    <section aria-label="Projects">{listBody}</section>
   );
 }

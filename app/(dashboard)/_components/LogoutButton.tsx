@@ -1,11 +1,12 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { clearClientCache } from "@/lib/cache/clientCache";
 import { Button } from "@/components/ui/button";
 
 export function LogoutButton() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   async function handleLogout() {
     const formData = new FormData();
@@ -17,7 +18,7 @@ export function LogoutButton() {
     });
     const data = (await res.json()) as { redirect?: string };
 
-    clearClientCache();
+    queryClient.clear();
 
     if (data.redirect) {
       router.push(data.redirect);

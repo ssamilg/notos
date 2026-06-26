@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SkipLink } from "@/components/a11y/SkipLink";
+import { QueryProvider } from "@/providers/QueryProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,7 +31,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col font-sans">
         <SkipLink />
-        {children}
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );
