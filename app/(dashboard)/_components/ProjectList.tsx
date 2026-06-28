@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ProjectWithCount } from "@/data/projects";
+import { DashboardListItem } from "@/app/(dashboard)/_components/DashboardListItem";
 import { DateDisplay } from "@/components/DateDisplay";
 import { GlowButton } from "@/components/glow-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,6 +15,8 @@ type ProjectListProps = {
   onDraftNameChange: (value: string) => void;
   onSaveCreate: () => void;
   onSelect: (id: string) => void;
+  onUpdateProject: (id: string, name: string) => void;
+  onDeleteRequest: (project: ProjectWithCount) => void;
 };
 
 export function ProjectList({
@@ -24,7 +27,10 @@ export function ProjectList({
   onDraftNameChange,
   onSaveCreate,
   onSelect,
+  onUpdateProject,
+  onDeleteRequest,
 }: ProjectListProps) {
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const saveClickedRef = useRef(false);
 
@@ -90,27 +96,40 @@ export function ProjectList({
     );
   }
 
+  const projectRows = projects.map((project) => {
+    const noteLabel = project.note_count === 1 ? "Note" : "Notes";
+    const meta = (
+      <div className="text-caption mt-2 flex items-center gap-2">
+        <span>
+          {project.note_count} {noteLabel}
+        </span>
+        <span className="text-muted-foreground" aria-hidden="true">
+          |
+        </span>
+        <DateDisplay updatedAt={project.updated_at} createdAt={project.created_at} />
+      </div>
+    );
+
+    return (
+      <DashboardListItem
+        key={project.id}
+        name={project.name}
+        isEditing={editingProjectId === project.id}
+        editInputLabel="Edit project name"
+        meta={meta}
+        onStartEdit={() => setEditingProjectId(project.id)}
+        onCancelEdit={() => setEditingProjectId(null)}
+        onSelect={() => onSelect(project.id)}
+        onSave={(name) => onUpdateProject(project.id, name)}
+        onDelete={() => onDeleteRequest(project)}
+      />
+    );
+  });
+
   let listBody = (
     <ul className="list-none p-0">
       {createRow}
-      {projects.map((project) => (
-        <li key={project.id}>
-          <button
-            type="button"
-            className="list-row list-row-interactive flex items-center justify-between gap-4"
-            onClick={() => onSelect(project.id)}
-          >
-            <span className="list-row-title">{project.name}</span>
-            <div className="text-caption flex shrink-0 items-center gap-2">
-              <span>
-                {project.note_count} {project.note_count === 1 ? "Note" : "Notes"}
-              </span>
-              <span aria-hidden="true">|</span>
-              <DateDisplay updatedAt={project.updated_at} createdAt={project.created_at} />
-            </div>
-          </button>
-        </li>
-      ))}
+      {projectRows}
     </ul>
   );
 
@@ -128,7 +147,5 @@ export function ProjectList({
     listBody = <ul className="list-none p-0">{createRow}</ul>;
   }
 
-  return (
-    <section aria-label="Projects">{listBody}</section>
-  );
+  return <section aria-label="Projects">{listBody}</section>;
 }

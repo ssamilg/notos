@@ -1,15 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type { ProjectWithCount } from "@/data/projects";
 import { useDashboardNavigation } from "@/context/DashboardNavigationProvider";
 import { DashboardTabHeader } from "@/app/(dashboard)/_components/DashboardTabHeader";
 import { ProjectList } from "@/app/(dashboard)/_components/ProjectList";
 import { TagManager } from "@/app/(dashboard)/_components/TagManager";
 import { ProjectListSkeleton } from "@/components/skeletons/ProjectListSkeleton";
+import { ConfirmationModal } from "@/components/ConfirmationModal";
+import { SearchInput } from "@/components/SearchInput";
 import { GlowButton } from "@/components/glow-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useProjectsQuery } from "@/hooks/queries/useProjectsQuery";
 import { useCreateProjectMutation } from "@/hooks/mutations/useCreateProjectMutation";
+import { useUpdateProjectMutation } from "@/hooks/mutations/useUpdateProjectMutation";
+import { useDeleteProjectMutation } from "@/hooks/mutations/useDeleteProjectMutation";
 import { useCreateTagMutation } from "@/hooks/mutations/useCreateTagMutation";
 
 type DashboardTab = "projects" | "tags";
@@ -28,16 +33,36 @@ function writeTabToLocation(tab: DashboardTab) {
   window.history.replaceState(null, "", url);
 }
 
+function filterByName<T extends { name: string }>(items: T[], query: string) {
+  const normalized = query.trim().toLowerCase();
+
+  if (!normalized) {
+    return items;
+  }
+
+  return items.filter((item) => item.name.toLowerCase().includes(normalized));
+}
+
 export function ProjectDashboard() {
   const { navigateToProject } = useDashboardNavigation();
   const { data: projects = [], isLoading: projectsLoading, isError, error } = useProjectsQuery();
   const createProjectMutation = useCreateProjectMutation();
+  const updateProjectMutation = useUpdateProjectMutation();
+  const deleteProjectMutation = useDeleteProjectMutation();
   const createTagMutation = useCreateTagMutation();
   const [activeTab, setActiveTab] = useState<DashboardTab>(() => readTabFromLocation());
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [projectDraftName, setProjectDraftName] = useState("");
   const [isCreatingTag, setIsCreatingTag] = useState(false);
   const [tagDraftName, setTagDraftName] = useState("");
+  const [projectSearch, setProjectSearch] = useState("");
+  const [pendingDeleteProject, setPendingDeleteProject] = useState<ProjectWithCount | null>(null);
+  const [projectDeleteDialogOpen, setProjectDeleteDialogOpen] = useState(false);
+
+  const filteredProjects = useMemo(
+    () => filterByName(projects, projectSearch),
+    [projects, projectSearch]
+  );
 
   function handleStartCreateProject() {
     setProjectDraftName("");
@@ -93,6 +118,18 @@ export function ProjectDashboard() {
     writeTabToLocation(tab);
   }
 
+  function handleProjectDeleteRequest(project: ProjectWithCount) {
+    setPendingDeleteProject(project);
+    setProjectDeleteDialogOpen(true);
+  }
+
+  function handleConfirmProjectDelete() {
+    if (pendingDeleteProject) {
+      deleteProjectMutation.mutate({ id: pendingDeleteProject.id });
+      setPendingDeleteProject(null);
+    }
+  }
+
   const showProjectSkeleton = activeTab === "projects" && projectsLoading && projects.length === 0;
 
   let tabAction = null;
@@ -120,15 +157,25 @@ export function ProjectDashboard() {
   }
 
   let projectsPanel = (
-    <ProjectList
-      projects={projects}
-      isCreating={isCreatingProject}
-      draftName={projectDraftName}
-      onCancelCreate={handleCancelCreateProject}
-      onDraftNameChange={setProjectDraftName}
-      onSaveCreate={handleSaveCreateProject}
-      onSelect={(id) => navigateToProject(id)}
-    />
+    <>
+      <SearchInput
+        value={projectSearch}
+        onChange={setProjectSearch}
+        placeholder="Search projects…"
+        ariaLabel="Search projects"
+      />
+      <ProjectList
+        projects={filteredProjects}
+        isCreating={isCreatingProject}
+        draftName={projectDraftName}
+        onCancelCreate={handleCancelCreateProject}
+        onDraftNameChange={setProjectDraftName}
+        onSaveCreate={handleSaveCreateProject}
+        onSelect={(id) => navigateToProject(id)}
+        onUpdateProject={(id, name) => updateProjectMutation.mutate({ id, name })}
+        onDeleteRequest={handleProjectDeleteRequest}
+      />
+    </>
   );
 
   if (showProjectSkeleton) {
@@ -143,6 +190,11 @@ export function ProjectDashboard() {
       </Alert>
     );
   }
+
+  const projectNoteLabel = pendingDeleteProject?.note_count === 1 ? "note" : "notes";
+  const projectDeleteDescription = pendingDeleteProject
+    ? `Are you sure you want to delete "${pendingDeleteProject.name}"? This affects ${pendingDeleteProject.note_count} ${projectNoteLabel}.`
+    : "Are you sure you want to delete this project?";
 
   return (
     <div>
@@ -165,6 +217,15 @@ export function ProjectDashboard() {
           onSaveCreate={handleSaveCreateTag}
         />
       </div>
+
+      <ConfirmationModal
+        open={projectDeleteDialogOpen}
+        onOpenChange={setProjectDeleteDialogOpen}
+        title="Delete project?"
+        description={projectDeleteDescription}
+        confirmLabel="Delete"
+        onConfirm={handleConfirmProjectDelete}
+      />
     </div>
   );
 }

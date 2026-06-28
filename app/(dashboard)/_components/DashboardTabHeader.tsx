@@ -30,7 +30,7 @@ export function DashboardTabHeader({ activeTab, onTabChange, action }: Dashboard
                 "text-heading cursor-pointer transition-colors",
                 isActive
                   ? "glow-text text-foreground"
-                  : "text-muted-foreground/35 hover:text-muted-foreground/60"
+                  : "text-muted-foreground/50 hover:text-muted-foreground/90"
               )}
               aria-current={isActive ? "page" : undefined}
               onClick={() => onTabChange(tab.id)}
