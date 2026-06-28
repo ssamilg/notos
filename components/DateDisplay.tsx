@@ -1,6 +1,7 @@
-import { formatDate } from "@/utils/formatDate";
+import { formatDateTime, formatTime } from "@/utils/formatDateTime";
 import { formatRelativeDate } from "@/utils/formatRelativeDate";
 import { cn } from "@/lib/utils";
+import { isToday, isYesterday } from "date-fns";
 
 type DateDisplayProps = {
   updatedAt: string;
@@ -8,29 +9,43 @@ type DateDisplayProps = {
   className?: string;
 };
 
-function getDateLabel(createdAt: string | undefined, updatedAt: string) {
-  let label = "Updated";
+function formatDisplayText(updatedAt: string) {
+  const date = new Date(updatedAt);
 
-  if (createdAt) {
-    const created = new Date(createdAt).getTime();
-    const updated = new Date(updatedAt).getTime();
-
-    if (Math.abs(updated - created) < 1000) {
-      label = "Created";
-    }
+  if (isToday(date)) {
+    return {
+      text: `Today, ${formatTime(updatedAt)}`,
+      isToday: true,
+    };
   }
 
-  return label;
+  if (isYesterday(date)) {
+    return {
+      text: `Yesterday, ${formatTime(updatedAt)}`,
+      isToday: false,
+    };
+  }
+
+  return {
+    text: formatRelativeDate(updatedAt),
+    isToday: false,
+  };
 }
 
-export function DateDisplay({ updatedAt, createdAt, className }: DateDisplayProps) {
-  const relative = formatRelativeDate(updatedAt);
-  const absolute = formatDate(updatedAt);
-  const label = getDateLabel(createdAt, updatedAt);
+export function DateDisplay({ updatedAt, className }: DateDisplayProps) {
+  const { text } = formatDisplayText(updatedAt);
+  const absolute = formatDateTime(updatedAt);
 
   return (
-    <time dateTime={updatedAt} title={`${label}: ${absolute}`} className={cn("text-caption", className)}>
-      {label}: {relative}
+    <time
+      dateTime={updatedAt}
+      title={absolute}
+      className={cn(
+        "text-caption shrink-0",
+        className,
+      )}
+    >
+      {text}
     </time>
   );
 }

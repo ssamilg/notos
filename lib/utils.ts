@@ -11,6 +11,7 @@ const twMerge = extendTailwindMerge({
         "text-caption",
         "text-label",
       ],
+      "text-shadow": ["glow-text", "glow-text-intense"],
     },
   },
 });
