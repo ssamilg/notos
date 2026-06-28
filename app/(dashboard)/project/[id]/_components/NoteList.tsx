@@ -5,13 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import type { Note } from "@/data/notes";
 import type { NoteFilters } from "@/lib/query/keys";
 import { useTagsQuery } from "@/hooks/queries/useTagsQuery";
-import { DateDisplay } from "@/components/DateDisplay";
+import { NoteListItem } from "@/app/(dashboard)/project/[id]/_components/NoteListItem";
 import { TagAutocomplete } from "@/components/TagAutocomplete";
-import { TagLabel } from "@/components/TagLabel";
 import { GlowButton } from "@/components/glow-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { stripMarkdown } from "@/utils/stripMarkdown";
-import { truncateText } from "@/utils/truncateText";
 
 type NoteListProps = {
   projectName: string;
@@ -25,6 +22,7 @@ type NoteListProps = {
   onBack: () => void;
   onLoadMore: () => void;
   onApplyFilters: (search: string, tagId: string | null) => void;
+  onToggleComplete: (noteId: string, isCompleted: boolean) => void;
 };
 
 export function NoteList({
@@ -39,6 +37,7 @@ export function NoteList({
   onBack,
   onLoadMore,
   onApplyFilters,
+  onToggleComplete,
 }: NoteListProps) {
   const urlSearch = filters.search ?? "";
   const urlTagId = filters.tagId;
@@ -150,45 +149,12 @@ export function NoteList({
   let listBody = (
     <ul className="list-none p-0">
       {notes.map((note) => (
-        <li key={note.id}>
-          <button
-            type="button"
-            className="list-row list-row-interactive"
-            onClick={() => onSelectNote(note.id)}
-            tabIndex={0}
-          >
-            <div className="flex items-center justify-between gap-4">
-              <span
-                className={`list-row-title ${
-                  note.is_completed ? "text-muted-foreground line-through" : ""
-                }`}
-              >
-                {note.title}
-              </span>
-              <div className="flex shrink-0 flex-wrap justify-end gap-2">
-                {note.tags.map((tag) => (
-                  <TagLabel key={`${note.id}-${tag}`} name={tag} />
-                ))}
-              </div>
-            </div>
-            <div className="mt-2 flex items-center justify-between gap-4">
-              <span
-                className={`text-caption truncate ${
-                  note.is_completed ? "text-muted-foreground line-through" : "text-muted-foreground"
-                }`}
-              >
-                {note.text.trim()
-                  ? truncateText(stripMarkdown(note.text), 120)
-                  : "No content"}
-              </span>
-              <DateDisplay
-                updatedAt={note.updated_at}
-                createdAt={note.created_at}
-                className="shrink-0"
-              />
-            </div>
-          </button>
-        </li>
+        <NoteListItem
+          key={note.id}
+          note={note}
+          onSelect={onSelectNote}
+          onToggleComplete={onToggleComplete}
+        />
       ))}
     </ul>
   );

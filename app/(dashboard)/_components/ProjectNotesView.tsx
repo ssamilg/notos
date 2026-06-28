@@ -9,6 +9,7 @@ import { useProjectsQuery } from "@/hooks/queries/useProjectsQuery";
 import { useNotesInfiniteQuery } from "@/hooks/queries/useNotesInfiniteQuery";
 import { useCreateNoteMutation } from "@/hooks/mutations/useCreateNoteMutation";
 import { useUpdateProjectMutation } from "@/hooks/mutations/useUpdateProjectMutation";
+import { useUpdateNoteMutation } from "@/hooks/mutations/useUpdateNoteMutation";
 import {
   readNoteFiltersFromLocation,
   writeNoteFiltersToLocation,
@@ -34,6 +35,7 @@ export function ProjectNotesView({ projectId }: ProjectNotesViewProps) {
   } = useNotesInfiniteQuery(projectId, filters);
   const createNoteMutation = useCreateNoteMutation(projectId, filters);
   const updateProjectMutation = useUpdateProjectMutation();
+  const updateNoteMutation = useUpdateNoteMutation();
 
   const project = projects.find((item) => item.id === projectId);
 
@@ -79,6 +81,13 @@ export function ProjectNotesView({ projectId }: ProjectNotesViewProps) {
         void fetchNextPage();
       }}
       onApplyFilters={applyFilters}
+      onToggleComplete={(id, isCompleted) =>
+        updateNoteMutation.mutate({
+          projectId,
+          id,
+          is_completed: isCompleted,
+        })
+      }
     />
   );
 
