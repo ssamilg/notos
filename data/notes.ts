@@ -2,6 +2,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/database.types';
 import { findOrCreateTags, syncNoteTags } from '@/data/tags';
 import { formatSupabaseError, throwSupabaseError } from '@/utils/supabase/errors';
+import {
+  decodeNoteListCursor,
+  encodeNoteListCursor,
+} from '@/utils/notesCursor';
 
 type NoteRow = Database['public']['Tables']['notes']['Row'];
 
@@ -109,6 +113,7 @@ export async function getNotes(
     .select(selectClause)
     .eq('project_id', input.projectId)
     .is('deleted_at', null)
+    .order('is_completed', { ascending: true })
     .order('updated_at', { ascending: false })
     .limit(limit);
 
@@ -117,7 +122,21 @@ export async function getNotes(
   }
 
   if (input.cursor) {
-    query = query.lt('updated_at', input.cursor);
+    const decodedCursor = decodeNoteListCursor(input.cursor);
+
+    if (decodedCursor) {
+      if (decodedCursor.is_completed) {
+        query = query
+          .eq('is_completed', true)
+          .lt('updated_at', decodedCursor.updated_at);
+      } else {
+        query = query.or(
+          `is_completed.eq.true,and(is_completed.eq.false,updated_at.lt."${decodedCursor.updated_at}")`
+        );
+      }
+    } else {
+      query = query.lt('updated_at', input.cursor);
+    }
   }
 
   if (input.search && input.search.trim().length > 0) {
@@ -136,7 +155,11 @@ export async function getNotes(
   let nextCursor: string | null = null;
 
   if (notes.length === limit) {
-    nextCursor = notes[notes.length - 1]?.updated_at ?? null;
+    const lastNote = notes[notes.length - 1];
+
+    if (lastNote) {
+      nextCursor = encodeNoteListCursor(lastNote.is_completed, lastNote.updated_at);
+    }
   }
 
   return { notes, nextCursor };

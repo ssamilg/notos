@@ -1,14 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Note } from "@/data/notes";
 import { showMutationError } from "@/lib/query/optimistic";
-import { syncQueriesWithApi } from "@/lib/query/mutationSync";
-import { setNoteInCache, updateNoteInCache } from "@/lib/query/noteCache";
+import { setNoteInCache, reorderNotesInCache, updateNoteInCache } from "@/lib/query/noteCache";
 import { queryKeys } from "@/lib/query/keys";
 import {
   restoreNotesQueries,
   snapshotNotesQueries,
 } from "@/hooks/queries/useNoteFromCache";
 import { apiFetch } from "@/utils/api/client";
+import { blurActiveElement } from "@/utils/blurActiveElement";
+import { NOTE_COMPLETE_REORDER_DELAY_MS } from "@/utils/notesCursor";
 
 type UpdateNoteInput = {
   projectId: string;
@@ -18,6 +19,15 @@ type UpdateNoteInput = {
   tags?: string[];
   is_completed?: boolean;
 };
+
+function isCompleteOnlyUpdate(input: UpdateNoteInput) {
+  return (
+    input.is_completed !== undefined &&
+    input.title === undefined &&
+    input.text === undefined &&
+    input.tags === undefined
+  );
+}
 
 export function useUpdateNoteMutation() {
   const queryClient = useQueryClient();
@@ -51,15 +61,24 @@ export function useUpdateNoteMutation() {
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: ["notes", input.projectId] });
       const previous = await snapshotNotesQueries(queryClient, input.projectId);
+      const completeOnly = isCompleteOnlyUpdate(input);
 
-      updateNoteInCache(queryClient, input.projectId, input.id, (note) => ({
-        ...note,
-        title: input.title ?? note.title,
-        text: input.text ?? note.text,
-        tags: input.tags ?? note.tags,
-        is_completed: input.is_completed ?? note.is_completed,
-        updated_at: new Date().toISOString(),
-      }));
+      updateNoteInCache(queryClient, input.projectId, input.id, (note) => {
+        let updatedAt = note.updated_at;
+
+        if (!completeOnly) {
+          updatedAt = new Date().toISOString();
+        }
+
+        return {
+          ...note,
+          title: input.title ?? note.title,
+          text: input.text ?? note.text,
+          tags: input.tags ?? note.tags,
+          is_completed: input.is_completed ?? note.is_completed,
+          updated_at: updatedAt,
+        };
+      });
 
       return { previous };
     },
@@ -74,9 +93,24 @@ export function useUpdateNoteMutation() {
       setNoteInCache(queryClient, serverNote);
       updateNoteInCache(queryClient, input.projectId, input.id, () => serverNote);
     },
-    onSettled: (_data, _error, input) => {
-      syncQueriesWithApi(queryClient, queryKeys.note(input.id));
-      syncQueriesWithApi(queryClient, ["notes", input.projectId]);
+    onSettled: (_data, error, input) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.note(input.id) });
+
+      const completeOnly = isCompleteOnlyUpdate(input);
+
+      if (!completeOnly) {
+        void queryClient.invalidateQueries({ queryKey: ["notes", input.projectId] });
+      } else if (!error) {
+        window.setTimeout(() => {
+          reorderNotesInCache(queryClient, input.projectId);
+
+          void queryClient
+            .invalidateQueries({ queryKey: ["notes", input.projectId] })
+            .then(() => {
+              blurActiveElement();
+            });
+        }, NOTE_COMPLETE_REORDER_DELAY_MS);
+      }
     },
   });
 }

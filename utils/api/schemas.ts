@@ -29,7 +29,7 @@ export const updateNoteSchema = z.object({
 
 export const notesQuerySchema = z.object({
   projectId: z.string().uuid(),
-  cursor: z.string().datetime().optional(),
+  cursor: z.string().min(1).optional(),
   search: z.string().trim().optional(),
   tag_id: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),

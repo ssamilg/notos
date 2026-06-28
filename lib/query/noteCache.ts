@@ -29,7 +29,7 @@ export function prependNoteToCache(
     const firstPage = pages[0] ?? { notes: [], nextCursor: null };
     pages[0] = {
       ...firstPage,
-      notes: sortNotes([note, ...firstPage.notes]),
+      notes: [note, ...firstPage.notes],
     };
 
     return {
@@ -56,16 +56,46 @@ export function updateNoteInCache(
 
     const pages = data.pages.map((page) => ({
       ...page,
-      notes: sortNotes(
-        page.notes.map((note) => {
-          if (note.id !== noteId) {
-            return note;
-          }
+      notes: page.notes.map((note) => {
+        if (note.id !== noteId) {
+          return note;
+        }
 
-          return updater(note);
-        })
-      ),
+        return updater(note);
+      }),
     }));
+
+    queryClient.setQueryData(key, {
+      ...data,
+      pages,
+    });
+  }
+}
+
+export function reorderNotesInCache(queryClient: QueryClient, projectId: string) {
+  const queries = queryClient.getQueriesData<NotesInfiniteData>({
+    queryKey: ["notes", projectId],
+  });
+
+  for (const [key, data] of queries) {
+    if (!data || data.pages.length === 0) {
+      continue;
+    }
+
+    const pageLengths = data.pages.map((page) => page.notes.length);
+    const sorted = sortNotes(data.pages.flatMap((page) => page.notes));
+    let offset = 0;
+
+    const pages = data.pages.map((page, index) => {
+      const count = pageLengths[index] ?? 0;
+      const notes = sorted.slice(offset, offset + count);
+      offset += count;
+
+      return {
+        ...page,
+        notes,
+      };
+    });
 
     queryClient.setQueryData(key, {
       ...data,
