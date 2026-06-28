@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOTOS - Seamless Noise to Signal (Highest Middle Peak)</title>
+<style>
+    :root {
+        --bg-pure-black: #000000;
+        --bg-panel: #050505;
+        --text-glowing-white: #ffffff;
+        --text-dim: #666666;
+        --text-very-dim: #222222;
+        --glow-subtle: 0 0 10px rgba(255, 255, 255, 0.4);
+        --glow-text: 0 0 12px rgba(255, 255, 255, 0.6);
+        --morph-speed: 0.25s;
+        --shoot-speed: 0.35s;
+        --transition-snap: cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-shoot: cubic-bezier(0.1, 0.9, 0.2, 1);
+    }
+
+    body {
+        background-color: var(--bg-pure-black);
+        color: var(--text-glowing-white);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        padding: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    .list-container {
+        background-color: var(--bg-panel);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 40px 50px;
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .section-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--text-dim);
+        margin: 0 0 15px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        padding-bottom: 10px;
+    }
+
+    .note-item {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        grid-template-rows: auto auto;
+        padding: 20px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        position: relative;
+    }
+
+    input[type="checkbox"] {
+        display: none;
+    }
+
+    .marker-container {
+        grid-column: 1;
+        grid-row: 1;
+        width: 48px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        align-self: center;
+    }
+
+    .noise-svg {
+        width: 100%;
+        height: 24px;
+        overflow: visible;
+    }
+
+    .wave-path {
+        /* Balanced wave with flat ends, middle triangle peaking highest (Y=2) */
+        d: path('M 0 12 L 8 12 L 14 7 L 19 18 L 24 2 L 29 22 L 34 8 L 40 12 L 48 12');
+        fill: none;
+        stroke: var(--text-glowing-white);
+        stroke-width: 2px;
+        stroke-linecap: butt;
+        stroke-linejoin: miter;
+        transition: d var(--morph-speed) var(--transition-snap),
+                    stroke var(--morph-speed) ease;
+        filter: drop-shadow(var(--glow-subtle));
+    }
+
+    .marker-container:hover .wave-path {
+        filter: drop-shadow(var(--glow-text));
+    }
+
+    input[type="checkbox"]:checked ~ .marker-container .wave-path {
+        /* Flat Line */
+        d: path('M 0 12 L 8 12 L 14 12 L 19 12 L 24 12 L 29 12 L 34 12 L 40 12 L 48 12');
+        stroke: var(--text-very-dim);
+        filter: none;
+    }
+
+    .text-container {
+        grid-column: 2;
+        grid-row: 1;
+        align-self: center;
+        margin-left: 16px;
+        position: relative;
+        cursor: pointer;
+    }
+
+    .text {
+        font-size: 1.4rem;
+        color: var(--text-glowing-white);
+        transition: color var(--shoot-speed) ease;
+        transition-delay: 0s;
+        display: inline-block;
+        position: relative;
+    }
+
+    .excerpt {
+        grid-column: 2;
+        grid-row: 2;
+        margin-left: 16px;
+        margin-top: 6px;
+        color: var(--text-dim);
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: color var(--shoot-speed) ease;
+        transition-delay: 0s;
+    }
+
+    .text::after {
+        content: '';
+        position: absolute;
+        left: -16px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0%;
+        height: 2px;
+        background-color: var(--text-very-dim);
+        transition: width var(--shoot-speed) var(--transition-shoot);
+        transition-delay: 0s;
+        pointer-events: none;
+    }
+
+    input[type="checkbox"]:checked ~ .text-container .text::after {
+        width: calc(100% + 16px);
+        transition-delay: var(--morph-speed);
+    }
+
+    input[type="checkbox"]:checked ~ .text-container .text,
+    input[type="checkbox"]:checked ~ .excerpt {
+        color: var(--text-very-dim);
+        text-shadow: none;
+        transition-delay: var(--morph-speed);
+    }
+
+    .text-container:hover .text, .excerpt:hover {
+        text-shadow: var(--glow-subtle);
+    }
+</style>
+</head>
+<body>
+
+    <div class="list-container">
+
+        <div class="section-title">Seamless Interaction: Wave to Line</div>
+
+        <div class="note-item">
+            <input type="checkbox" id="note-1">
+            <label class="marker-container" for="note-1">
+                <svg class="noise-svg" viewBox="0 0 48 24" preserveAspectRatio="none">
+                    <path class="wave-path"></path>
+                </svg>
+            </label>
+            <div class="text-container">
+                <div class="text">Refactor Authentication Flow</div>
+            </div>
+            <div class="excerpt">Implement Supabase RLS and migrate the offline-first tokens to the new local context wrapper.</div>
+        </div>
+
+        <div class="note-item">
+            <input type="checkbox" id="note-2">
+            <label class="marker-container" for="note-2">
+                <svg class="noise-svg" viewBox="0 0 48 24" preserveAspectRatio="none">
+                    <path class="wave-path"></path>
+                </svg>
+            </label>
+            <div class="text-container">
+                <div class="text">Write System Design Doc</div>
+            </div>
+            <div class="excerpt">Document the Next.js and Tailwind architecture for the new portfolio piece.</div>
+        </div>
+
+        <div class="note-item">
+            <input type="checkbox" id="note-3" checked>
+            <label class="marker-container" for="note-3">
+                <svg class="noise-svg" viewBox="0 0 48 24" preserveAspectRatio="none">
+                    <path class="wave-path"></path>
+                </svg>
+            </label>
+            <div class="text-container">
+                <div class="text">Optimize Sync Engine</div>
+            </div>
+            <div class="excerpt">Ensure the background cron worker flushes deleted_at records cleanly without causing UI lag.</div>
+        </div>
+
+    </div>
+
+</body>
+</html>

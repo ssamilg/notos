@@ -40,3 +40,7 @@ NOTOS is a minimal note-taking app that allows you to create, read, update, and 
 - 2026-06-26: Dashboard navigation moved client-side with pushState so in-app route changes skip Next RSC fetches.
 - 2026-06-26: React Query session cache staleTime set to 30 minutes; mutations invalidate and refetch related queries after success.
 - 2026-06-27: Markdown support issues fixed and some minor ui improvements made.
+- 2026-06-27: DateDisplay and TagDisplay standardized with relative dates, bracketed tags, and Today glow styling.
+- 2026-06-27: Project and tag lists moved to explicit Edit/Save/Cancel/Delete two-row layouts with local search.
+- 2026-06-27: Universal ConfirmationModal added for project, tag, and note deletions.
+- 2026-06-27: Note canvas got TagInput autocomplete and a persistent Save split-button with localStorage preference.

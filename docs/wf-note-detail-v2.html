@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOTOS - Widescreen Note List</title>
+<style>
+    :root {
+        --bg-pure-black: #000000;
+        --bg-panel: #050505;
+        --text-glowing-white: #ffffff;
+        --text-dim: #666666;
+        --text-very-dim: #333333;
+        --glow-subtle: 0 0 8px rgba(255, 255, 255, 0.3);
+        --glow-intense: 0 0 15px rgba(255, 255, 255, 0.8);
+        --border-dim: 1px solid rgba(255, 255, 255, 0.15);
+        --border-glow: 1px solid rgba(255, 255, 255, 0.6);
+        --transition: all 0.2s ease-in-out;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: var(--bg-pure-black);
+        color: var(--text-glowing-white);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        padding: 60px;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* Widescreen Container */
+    .wireframe-section {
+        position: relative;
+        background-color: var(--bg-panel);
+        border: var(--border-dim);
+        padding: 60px 80px;
+        width: 100%;
+        max-width: 1100px;
+        min-height: 80vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .view-label {
+        position: absolute;
+        top: -12px;
+        left: 40px;
+        background: var(--bg-pure-black);
+        padding: 0 15px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--text-dim);
+        border: var(--border-dim);
+    }
+
+    h1, h2, h3 {
+        margin: 0;
+        font-weight: 400;
+    }
+
+    /* Top Navigation & Header */
+    .header-layout {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 40px;
+    }
+
+    .nav-back {
+        color: var(--text-dim);
+        text-decoration: none;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .nav-back:hover {
+        color: var(--text-glowing-white);
+        text-shadow: var(--glow-subtle);
+    }
+
+    .list-title {
+        font-size: 2.5rem;
+        text-shadow: var(--glow-subtle);
+        letter-spacing: 1px;
+    }
+
+    .btn {
+        background: transparent;
+        color: var(--text-glowing-white);
+        border: var(--border-glow);
+        padding: 10px 24px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: var(--transition);
+    }
+
+    .btn:hover {
+        box-shadow: var(--glow-intense);
+        text-shadow: var(--glow-subtle);
+    }
+
+    /* Minimalist Command/Filter Bar */
+    .command-bar {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        border-bottom: var(--border-glow);
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+    }
+
+    .input-bare {
+        background: transparent;
+        border: none;
+        color: var(--text-glowing-white);
+        font-family: inherit;
+        font-size: 1rem;
+    }
+
+    .input-bare:focus {
+        outline: none;
+    }
+
+    .input-bare::placeholder {
+        color: var(--text-dim);
+    }
+
+    .search-input {
+        flex-grow: 1;
+        font-size: 1.2rem;
+    }
+
+    .tag-input {
+        width: 150px;
+        border-bottom: 1px dashed var(--text-dim);
+        padding-bottom: 2px;
+    }
+
+    /* Typographic Sort Controls */
+    .sort-group {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        color: var(--text-dim);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .sort-btn {
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .sort-btn.active {
+        color: var(--text-glowing-white);
+        text-shadow: var(--glow-subtle);
+    }
+
+    .sort-btn:hover:not(.active) {
+        color: #aaaaaa;
+    }
+
+    .clear-btn {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        margin-left: 10px;
+        border-bottom: 1px solid transparent;
+        transition: var(--transition);
+    }
+
+    .clear-btn:hover {
+        color: var(--text-glowing-white);
+        border-bottom: 1px solid var(--text-glowing-white);
+    }
+
+    /* List Items */
+    .list-item {
+        display: flex;
+        align-items: center;
+        padding: 24px 0;
+        border-bottom: var(--border-dim);
+        transition: var(--transition);
+    }
+
+    .list-item:hover {
+        background: rgba(255, 255, 255, 0.02);
+        padding-left: 10px;
+        padding-right: 10px;
+        margin: 0 -10px; /* Offset padding to keep alignment */
+    }
+
+    /* Checkbox / Completion marker */
+    .status-marker {
+        width: 40px;
+        font-family: monospace;
+        font-size: 1.2rem;
+        color: var(--text-dim);
+        cursor: pointer;
+        user-select: none;
+        transition: var(--transition);
+    }
+
+    .status-marker:hover {
+        color: var(--text-glowing-white);
+        text-shadow: var(--glow-subtle);
+    }
+
+    .item-content {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .item-title {
+        font-size: 1.3rem;
+        cursor: pointer;
+    }
+
+    .item-title:hover {
+        text-shadow: var(--glow-subtle);
+    }
+
+    .item-excerpt {
+        color: var(--text-dim);
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 600px;
+    }
+
+    .item-meta {
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 150px;
+    }
+
+    .meta-tag {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+        font-family: monospace;
+    }
+
+    .meta-date {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+    }
+
+    /* Completed State Modifier */
+    .list-item.completed .item-title,
+    .list-item.completed .item-excerpt {
+        text-decoration: line-through;
+        color: var(--text-very-dim);
+        text-shadow: none;
+    }
+
+    .list-item.completed .status-marker {
+        color: var(--text-very-dim);
+    }
+
+    .list-item.completed .meta-tag,
+    .list-item.completed .meta-date {
+        color: var(--text-very-dim);
+    }
+</style>
+</head>
+<body>
+
+    <div class="wireframe-section">
+        <div class="view-label">Desktop: Note List (Widescreen)</div>
+
+        <div class="header-layout">
+            <div>
+                <div class="nav-back" style="margin-bottom: 20px; display: inline-block;">&larr; Back to Projects</div>
+                <h2 class="list-title">Work & Engineering</h2>
+            </div>
+            <button class="btn">+ New Note</button>
+        </div>
+
+        <div class="command-bar">
+            <span style="color: var(--text-dim); font-family: monospace;">></span>
+            <input type="text" class="input-bare search-input" placeholder="Search text...">
+
+            <input type="text" class="input-bare tag-input" placeholder="#tag..." list="tag-suggestions">
+            <datalist id="tag-suggestions">
+                <option value="architecture">
+                <option value="meeting">
+                <option value="ideas">
+            </datalist>
+
+            <div class="sort-group">
+                <span>Sort:</span>
+                <span class="sort-btn active">Date &darr;</span>
+                <span class="sort-btn">Alpha</span>
+            </div>
+
+            <div class="clear-btn">Reset</div>
+        </div>
+
+        <div class="list-item">
+            <div class="status-marker">[ ]</div>
+            <div class="item-content">
+                <div class="item-title" style="text-shadow: var(--glow-subtle);">System Design Draft</div>
+                <div class="item-excerpt">The core philosophy here is offline-first. We need to ensure that the optimistic UI...</div>
+            </div>
+            <div class="item-meta">
+                <span class="meta-tag">#architecture</span>
+                <span class="meta-date" style="color: var(--text-glowing-white);">Today, 14:30</span>
+            </div>
+        </div>
+
+        <div class="list-item">
+            <div class="status-marker">[ ]</div>
+            <div class="item-content">
+                <div class="item-title">Meeting Notes: API Integration</div>
+                <div class="item-excerpt">Discussed the payload structures with the backend team. They will expose a new GraphQL endpoint...</div>
+            </div>
+            <div class="item-meta">
+                <span class="meta-tag">#meeting</span>
+                <span class="meta-date">Yesterday, 09:15</span>
+            </div>
+        </div>
+
+        <div class="list-item completed">
+            <div class="status-marker">[x]</div>
+            <div class="item-content">
+                <div class="item-title">Setup Local Dev Environment</div>
+                <div class="item-excerpt">Install dependencies, configure Supabase CLI, and run initial migrations.</div>
+            </div>
+            <div class="item-meta">
+                <span class="meta-tag">#setup</span>
+                <span class="meta-date">2026-06-18</span>
+            </div>
+        </div>
+
+        <div class="list-item">
+            <div class="status-marker">[ ]</div>
+            <div class="item-content">
+                <div class="item-title">Ideas for caching layer</div>
+                <div class="item-excerpt">Maybe we can leverage IndexedDB for the heavy lifting instead of just local storage?</div>
+            </div>
+            <div class="item-meta">
+                <span class="meta-tag">#ideas</span>
+                <span class="meta-date">2026-06-18</span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
