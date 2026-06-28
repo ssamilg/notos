@@ -86,6 +86,18 @@ export function NoteDetailView({ noteId }: NoteDetailViewProps) {
     navigateToNote(nextNoteId);
   }
 
+  function handleToggleComplete() {
+    if (!note) {
+      return;
+    }
+
+    updateNoteMutation.mutate({
+      projectId: note.project_id,
+      id: noteId,
+      is_completed: !note.is_completed,
+    });
+  }
+
   function handleDelete() {
     if (!note) {
       return;
@@ -122,6 +134,7 @@ export function NoteDetailView({ noteId }: NoteDetailViewProps) {
         onCancel={handleBack}
         onBack={handleBack}
         onDelete={handleDelete}
+        onToggleComplete={handleToggleComplete}
         onSaveAndExit={handleSaveAndExit}
         onSaveAndNew={handleSaveAndNew}
       />

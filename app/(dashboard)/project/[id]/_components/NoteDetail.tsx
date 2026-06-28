@@ -5,8 +5,12 @@ import dynamic from "next/dynamic";
 import { useRef, useState } from "react";
 import type { Note } from "@/data/notes";
 import { DateDisplay } from "@/components/DateDisplay";
+import { ConfirmationModal } from "@/components/ConfirmationModal";
+import { TagDisplay } from "@/components/TagDisplay";
+import { TagInput } from "@/components/TagInput";
+import { useTagsQuery } from "@/hooks/queries/useTagsQuery";
+import { SaveSplitButton } from "@/components/SaveSplitButton";
 import { GlowButton } from "@/components/glow-button";
-import { Badge } from "@/components/ui/badge";
 
 const MarkdownContent = dynamic(
   () => import("@/components/MarkdownContent").then((module) => module.MarkdownContent),
@@ -37,6 +41,7 @@ type NoteDetailProps = {
   onCancel: () => void;
   onBack: () => void;
   onDelete: () => void;
+  onToggleComplete: () => void;
   onSaveAndExit?: (input: {
     title?: string;
     text?: string;
@@ -60,21 +65,6 @@ function noteToDraft(note: Note): NoteDraft {
   };
 }
 
-function parseTagsInput(value: string): string[] {
-  return [
-    ...new Set(
-      value
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag.length > 0)
-    ),
-  ];
-}
-
-function formatTagsInput(tags: string[]): string {
-  return tags.join(", ");
-}
-
 function draftsEqual(a: NoteDraft, b: NoteDraft) {
   return (
     a.title === b.title &&
@@ -92,13 +82,16 @@ export function NoteDetail({
   onCancel,
   onBack,
   onDelete,
+  onToggleComplete,
   onSaveAndExit,
   onSaveAndNew,
 }: NoteDetailProps) {
+  const { data: tagSuggestions = [] } = useTagsQuery();
   const [isEditing, setIsEditing] = useState(isDraft);
   const [draft, setDraft] = useState<NoteDraft>(() => noteToDraft(note));
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const savedSnapshotRef = useRef<NoteDraft>(noteToDraft(note));
 
   function startEditing() {
@@ -210,22 +203,23 @@ export function NoteDetail({
     setIsEditing(false);
   }
 
-  function handleDelete() {
+  function handleDeleteRequest() {
+    setDeleteDialogOpen(true);
+  }
+
+  function handleConfirmDelete() {
     setIsDeleting(true);
     onDelete();
   }
 
-  function handleTagsChange(value: string) {
-    setDraft({
-      ...draft,
-      tags: parseTagsInput(value),
-    });
-  }
-
   let headerActions = (
     <>
-      <GlowButton type="button" onClick={handleDelete} disabled={isDeleting} tabIndex={0}>
-        {isDeleting ? "Deleting…" : "Delete"}
+      <GlowButton type="button" onClick={handleDeleteRequest} disabled={isDeleting} tabIndex={0}>
+        Delete
+      </GlowButton>
+
+      <GlowButton type="button" onClick={onToggleComplete} disabled={isDeleting} tabIndex={0}>
+        {note.is_completed ? "Mark Incomplete" : "Mark Done"}
       </GlowButton>
 
       <GlowButton type="button" onClick={startEditing} disabled={isDeleting} tabIndex={0}>
@@ -241,17 +235,13 @@ export function NoteDetail({
           Cancel
         </GlowButton>
 
-        <GlowButton type="button" onClick={handleSaveAndExit} disabled={isSaving} tabIndex={0}>
-          {isSaving ? "Saving…" : "Save & Exit"}
-        </GlowButton>
-
-        <GlowButton type="button" onClick={handleSaveAndNew} disabled={isSaving} tabIndex={0}>
-          {isSaving ? "Saving…" : "Save & New Note"}
-        </GlowButton>
-
-        <GlowButton type="button" onClick={handleSave} disabled={isSaving} tabIndex={0}>
-          {isSaving ? "Saving…" : "Save"}
-        </GlowButton>
+        <SaveSplitButton
+          disabled={isSaving}
+          saving={isSaving}
+          onSave={handleSave}
+          onSaveAndExit={handleSaveAndExit}
+          onSaveAndNew={handleSaveAndNew}
+        />
       </>
     );
   }
@@ -279,30 +269,15 @@ export function NoteDetail({
     );
   }
 
-  let tagRowStart = (
-    <div className="flex flex-wrap gap-2">
-      {note.tags.length > 0 ? (
-        note.tags.map((tag) => (
-          <Badge key={tag} variant="outline">
-            {tag}
-          </Badge>
-        ))
-      ) : (
-        <span className="text-caption text-muted-foreground">No tags</span>
-      )}
-    </div>
-  );
+  let tagRowStart = <TagDisplay tags={note.tags} />;
 
   if (isEditing) {
     tagRowStart = (
-      <input
-        className="input-edit text-caption min-w-0 flex-1 text-muted-foreground"
-        value={formatTagsInput(draft.tags)}
-        onChange={(event) => handleTagsChange(event.target.value)}
-        placeholder="Tags (comma-separated)"
-        aria-label="Note tags"
+      <TagInput
+        tags={draft.tags}
+        onChange={(tags) => setDraft({ ...draft, tags })}
+        suggestions={tagSuggestions.map((tag) => ({ id: tag.id, name: tag.name }))}
         disabled={isSaving}
-        tabIndex={0}
       />
     );
   }
@@ -322,29 +297,6 @@ export function NoteDetail({
         disabled={isSaving}
         tabIndex={0}
       />
-    );
-  }
-
-  let completionRow = null;
-
-  if (isEditing) {
-    completionRow = (
-      <label className="text-label flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={draft.is_completed}
-          onChange={(event) =>
-            setDraft({ ...draft, is_completed: event.target.checked })
-          }
-          disabled={isSaving}
-          tabIndex={0}
-        />
-        Mark as completed
-      </label>
-    );
-  } else if (note.is_completed) {
-    completionRow = (
-      <span className="text-caption text-muted-foreground">Completed</span>
     );
   }
 
@@ -377,9 +329,16 @@ export function NoteDetail({
         </div>
       </div>
 
-      {completionRow}
-
       <div className="mt-6">{bodyContent}</div>
+
+      <ConfirmationModal
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete note?"
+        description={`Are you sure you want to delete "${note.title}"? This cannot be undone immediately.`}
+        confirmLabel="Delete"
+        onConfirm={handleConfirmDelete}
+      />
     </article>
   );
 }
