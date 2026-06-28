@@ -22,6 +22,9 @@ type NoteListProps = {
   onBack: () => void;
   onLoadMore: () => void;
   onApplyFilters: (search: string, tagId: string | null) => void;
+  exitingNoteId?: string | null;
+  hiddenNoteId?: string | null;
+  onExitAnimationComplete: (noteId: string) => void;
   onToggleComplete: (noteId: string, isCompleted: boolean) => void;
 };
 
@@ -37,6 +40,9 @@ export function NoteList({
   onBack,
   onLoadMore,
   onApplyFilters,
+  exitingNoteId,
+  hiddenNoteId,
+  onExitAnimationComplete,
   onToggleComplete,
 }: NoteListProps) {
   const urlSearch = filters.search ?? "";
@@ -148,14 +154,18 @@ export function NoteList({
 
   let listBody = (
     <ul className="list-none p-0">
-      {notes.map((note) => (
-        <NoteListItem
-          key={note.id}
-          note={note}
-          onSelect={onSelectNote}
-          onToggleComplete={onToggleComplete}
-        />
-      ))}
+      {notes
+        .filter((note) => note.id !== hiddenNoteId)
+        .map((note) => (
+          <NoteListItem
+            key={note.id}
+            note={note}
+            isExiting={exitingNoteId === note.id}
+            onSelect={onSelectNote}
+            onToggleComplete={onToggleComplete}
+            onExitAnimationComplete={onExitAnimationComplete}
+          />
+        ))}
     </ul>
   );
 

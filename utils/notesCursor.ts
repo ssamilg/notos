@@ -23,3 +23,4 @@ export function decodeNoteListCursor(cursor: string): NoteListCursor | null {
 }
 
 export const NOTE_COMPLETE_REORDER_DELAY_MS = 600;
+export const NOTE_ROW_EXIT_DURATION_MS = 350;

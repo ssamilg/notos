@@ -1,15 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Note } from "@/data/notes";
 import { showMutationError } from "@/lib/query/optimistic";
-import { setNoteInCache, reorderNotesInCache, updateNoteInCache } from "@/lib/query/noteCache";
+import { setNoteInCache, updateNoteInCache } from "@/lib/query/noteCache";
 import { queryKeys } from "@/lib/query/keys";
 import {
   restoreNotesQueries,
   snapshotNotesQueries,
 } from "@/hooks/queries/useNoteFromCache";
 import { apiFetch } from "@/utils/api/client";
-import { blurActiveElement } from "@/utils/blurActiveElement";
-import { NOTE_COMPLETE_REORDER_DELAY_MS } from "@/utils/notesCursor";
 
 type UpdateNoteInput = {
   projectId: string;
@@ -93,23 +91,13 @@ export function useUpdateNoteMutation() {
       setNoteInCache(queryClient, serverNote);
       updateNoteInCache(queryClient, input.projectId, input.id, () => serverNote);
     },
-    onSettled: (_data, error, input) => {
+    onSettled: (_data, _error, input) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.note(input.id) });
 
       const completeOnly = isCompleteOnlyUpdate(input);
 
       if (!completeOnly) {
         void queryClient.invalidateQueries({ queryKey: ["notes", input.projectId] });
-      } else if (!error) {
-        window.setTimeout(() => {
-          reorderNotesInCache(queryClient, input.projectId);
-
-          void queryClient
-            .invalidateQueries({ queryKey: ["notes", input.projectId] })
-            .then(() => {
-              blurActiveElement();
-            });
-        }, NOTE_COMPLETE_REORDER_DELAY_MS);
       }
     },
   });

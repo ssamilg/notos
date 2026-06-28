@@ -68,6 +68,7 @@
   --note-line-complete: var(--text-very-dim);
   --note-marker-width: 48px;
   --note-list-gap: 16px;
+  --note-exit-speed: 0.35s;
   --border-dim: 1px solid rgba(255, 255, 255, 0.15);
   --border-glow: 1px solid rgba(255, 255, 255, 0.7);
   --background: var(--bg-pure-black);
@@ -240,6 +241,39 @@
 
   .note-list-row {
     position: relative;
+    transition:
+      transform var(--note-exit-speed) var(--transition-shoot),
+      opacity var(--note-exit-speed) ease;
+    transform-origin: center left;
+  }
+
+  .note-list-item {
+    overflow: hidden;
+    transition:
+      max-height var(--note-exit-speed) var(--transition-shoot),
+      opacity var(--note-exit-speed) ease,
+      margin var(--note-exit-speed) ease,
+      padding var(--note-exit-speed) ease;
+  }
+
+  .note-list-item-exiting {
+    opacity: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    pointer-events: none;
+  }
+
+  .note-list-item-exiting .note-list-row {
+    transform: translateX(3rem) scale(0.94);
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom-color: transparent;
+    transition:
+      transform var(--note-exit-speed) var(--transition-shoot),
+      opacity var(--note-exit-speed) ease,
+      padding var(--note-exit-speed) ease,
+      border-color var(--note-exit-speed) ease !important;
   }
 
   .note-marker-hover-actions {

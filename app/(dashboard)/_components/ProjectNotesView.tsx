@@ -10,6 +10,7 @@ import { useNotesInfiniteQuery } from "@/hooks/queries/useNotesInfiniteQuery";
 import { useCreateNoteMutation } from "@/hooks/mutations/useCreateNoteMutation";
 import { useUpdateProjectMutation } from "@/hooks/mutations/useUpdateProjectMutation";
 import { useUpdateNoteMutation } from "@/hooks/mutations/useUpdateNoteMutation";
+import { useNoteCompleteReorder } from "@/hooks/useNoteCompleteReorder";
 import {
   readNoteFiltersFromLocation,
   writeNoteFiltersToLocation,
@@ -36,6 +37,8 @@ export function ProjectNotesView({ projectId }: ProjectNotesViewProps) {
   const createNoteMutation = useCreateNoteMutation(projectId, filters);
   const updateProjectMutation = useUpdateProjectMutation();
   const updateNoteMutation = useUpdateNoteMutation();
+  const { exitingNoteId, hiddenNoteId, scheduleExitAndReorder, handleExitAnimationComplete } =
+    useNoteCompleteReorder(projectId);
 
   const project = projects.find((item) => item.id === projectId);
 
@@ -81,12 +84,22 @@ export function ProjectNotesView({ projectId }: ProjectNotesViewProps) {
         void fetchNextPage();
       }}
       onApplyFilters={applyFilters}
+      exitingNoteId={exitingNoteId}
+      hiddenNoteId={hiddenNoteId}
+      onExitAnimationComplete={handleExitAnimationComplete}
       onToggleComplete={(id, isCompleted) =>
-        updateNoteMutation.mutate({
-          projectId,
-          id,
-          is_completed: isCompleted,
-        })
+        updateNoteMutation.mutate(
+          {
+            projectId,
+            id,
+            is_completed: isCompleted,
+          },
+          {
+            onSuccess: () => {
+              scheduleExitAndReorder(id);
+            },
+          }
+        )
       }
     />
   );

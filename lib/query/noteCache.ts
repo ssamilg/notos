@@ -4,6 +4,7 @@ import type { NoteFilters } from "@/lib/query/keys";
 import { queryKeys } from "@/lib/query/keys";
 import type { NotesInfiniteData } from "@/hooks/queries/useNotesInfiniteQuery";
 import { sortNotes } from "@/lib/query/selectors/sortNotes";
+import { blurActiveElement } from "@/utils/blurActiveElement";
 
 export function setNoteInCache(queryClient: QueryClient, note: Note) {
   queryClient.setQueryData(queryKeys.note(note.id), note);
@@ -102,6 +103,12 @@ export function reorderNotesInCache(queryClient: QueryClient, projectId: string)
       pages,
     });
   }
+}
+
+export async function finalizeNoteListReorder(queryClient: QueryClient, projectId: string) {
+  reorderNotesInCache(queryClient, projectId);
+  await queryClient.invalidateQueries({ queryKey: ["notes", projectId] });
+  blurActiveElement();
 }
 
 export function removeNoteFromCache(queryClient: QueryClient, projectId: string, noteId: string) {
