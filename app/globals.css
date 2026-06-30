@@ -222,7 +222,8 @@
   }
 
 
-  .list-row.note-row-completed:hover {
+  .list-row.note-row-completed:hover,
+  .note-list-entry.note-row-completed .list-row:hover {
     .text-caption,
     .note-title-text,
     .note-excerpt {
@@ -239,16 +240,28 @@
     @apply text-xl/7 font-normal;
   }
 
-  .note-list-row {
+  .note-list {
+    overflow: visible;
+  }
+
+  .note-list-entry {
     position: relative;
+    margin-left: calc(-1 * (var(--note-marker-width) + var(--note-list-gap)));
+    padding-left: calc(var(--note-marker-width) + var(--note-list-gap));
     transition:
       transform var(--note-exit-speed) var(--transition-shoot),
       opacity var(--note-exit-speed) ease;
     transform-origin: center left;
   }
 
+  .note-list-row {
+    position: relative;
+    width: 100%;
+    overflow: visible;
+  }
+
   .note-list-item {
-    overflow: hidden;
+    overflow: visible;
     transition:
       max-height var(--note-exit-speed) var(--transition-shoot),
       opacity var(--note-exit-speed) ease,
@@ -257,48 +270,63 @@
   }
 
   .note-list-item-exiting {
+    overflow: hidden;
     opacity: 0;
     margin-top: 0;
     margin-bottom: 0;
     pointer-events: none;
   }
 
-  .note-list-item-exiting .note-list-row {
+  .note-list-item-exiting .note-list-entry {
     transform: translateX(3rem) scale(0.94);
     opacity: 0;
+  }
+
+  .note-list-item-exiting .note-list-row {
     padding-top: 0;
     padding-bottom: 0;
     border-bottom-color: transparent;
     transition:
-      transform var(--note-exit-speed) var(--transition-shoot),
-      opacity var(--note-exit-speed) ease,
       padding var(--note-exit-speed) ease,
       border-color var(--note-exit-speed) ease !important;
   }
 
-  .note-marker-hover-actions {
-    @apply absolute top-5 left-4 flex shrink-0 -translate-x-4 opacity-0 transition-all duration-300 ease-out pointer-events-none;
-    height: 1.75rem;
+  .note-marker-gutter {
+    position: absolute;
+    right: calc(100% + var(--note-list-gap));
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    display: flex;
+    width: var(--note-marker-width);
     align-items: center;
+    padding-right: var(--note-list-gap);
+    margin-right: calc(-1 * var(--note-list-gap));
+    opacity: 0;
+    transform: translateX(-1rem);
+    transition:
+      transform 300ms ease-out,
+      opacity 300ms ease-out;
+    pointer-events: none;
   }
 
-  .note-list-row:hover .note-marker-hover-actions,
-  .note-marker-hover-actions:focus-within {
-    @apply translate-x-0 opacity-100 pointer-events-auto;
+  .note-list-entry:hover .note-marker-gutter,
+  .note-marker-gutter:hover,
+  .note-marker-gutter:focus-within {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
   }
 
   .note-list-content {
-    transition: padding-left 300ms ease-out;
-  }
-
-  .note-list-row:hover .note-list-content,
-  .note-list-row:focus-within .note-list-content {
-    padding-left: calc(var(--note-marker-width) + var(--note-list-gap));
+    display: block;
+    width: 100%;
   }
 
   .note-marker {
     width: var(--note-marker-width);
-    height: 1.75rem;
+    height: 100%;
+    min-height: 1.75rem;
     display: flex;
     align-items: center;
     border: none;
@@ -362,12 +390,6 @@
   .note-row-completed .note-title-text::after {
     width: 100%;
     transition-delay: var(--morph-speed);
-  }
-
-  .note-list-row:hover.note-row-completed .note-title-text::after,
-  .note-list-row:focus-within.note-row-completed .note-title-text::after {
-    left: calc(-1 * (var(--note-marker-width) + var(--note-list-gap)));
-    width: calc(100% + var(--note-marker-width) + var(--note-list-gap));
   }
 
   .note-row-completed .note-title-text {

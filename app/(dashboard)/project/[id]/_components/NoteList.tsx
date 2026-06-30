@@ -153,7 +153,7 @@ export function NoteList({
   }
 
   let listBody = (
-    <ul className="list-none p-0">
+    <ul className="note-list list-none p-0">
       {notes
         .filter((note) => note.id !== hiddenNoteId)
         .map((note) => (
@@ -216,7 +216,7 @@ export function NoteList({
         <input
           key={urlSearch}
           ref={searchInputRef}
-          className="input-bare text-body flex-1 border-b! border-b-white/60! focus-visible:border-b-white!"
+          className="input-bare text-body flex-1"
           defaultValue={urlSearch}
           placeholder="> Search notes…"
           aria-label="Search notes"

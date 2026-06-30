@@ -206,7 +206,7 @@ export function TagAutocomplete({
         aria-expanded={isOpen}
         aria-controls={listboxId}
         aria-autocomplete="list"
-        className={cn("input-bare text-body w-full border-b! border-b-white/60! focus-visible:border-b-white!", inputClassName)}
+        className={cn("input-bare text-body w-full", inputClassName)}
         value={inputValue}
         placeholder={placeholder}
         onChange={handleInputChange}
