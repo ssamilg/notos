@@ -222,14 +222,17 @@
   }
 
 
-  .list-row.note-row-completed:hover,
-  .note-list-entry.note-row-completed .list-row:hover {
-    .text-caption,
-    .note-title-text,
-    .note-excerpt {
-      color: var(--text-very-dim) !important;
-      text-shadow: none;
-    }
+  .note-list-entry.note-row-completed:hover .note-title-text,
+  .note-list-entry.note-row-completed:hover .note-excerpt,
+  .note-list-entry.note-row-completed:hover .text-caption {
+    color: var(--text-dim) !important;
+    text-shadow: none;
+    transition-delay: 0s;
+  }
+
+  .note-list-entry.note-row-completed:hover .note-title-text::after {
+    background-color: var(--text-dim);
+    transition-delay: 0s;
   }
 
   .list-row-interactive {
@@ -395,7 +398,7 @@
   .note-row-completed .note-title-text {
     color: var(--text-very-dim);
     text-shadow: none;
-    transition-delay: var(--morph-speed);
+    transition-delay: 0s;
   }
 
   .list-row-interactive:hover .note-title-text {
@@ -410,13 +413,13 @@
   .note-row-completed .note-excerpt {
     color: var(--text-very-dim);
     text-shadow: none;
-    transition-delay: var(--morph-speed);
+    transition-delay: 0s;
   }
 
   .note-row-completed .text-caption {
     color: var(--text-very-dim);
     text-shadow: none;
-    transition-delay: var(--morph-speed);
+    transition-delay: 0s;
   }
 
   .note-row-completed .text-caption.date-today {

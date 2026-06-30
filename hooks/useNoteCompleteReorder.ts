@@ -32,6 +32,13 @@ export function useNoteCompleteReorder(projectId: string) {
     timeoutsRef.current = [];
   }, []);
 
+  const cancelScheduledExit = useCallback(() => {
+    clearScheduledExit();
+    exitHandledRef.current = null;
+    setExitingNoteId(null);
+    setHiddenNoteId(null);
+  }, [clearScheduledExit]);
+
   const handleExitAnimationComplete = useCallback(
     (noteId: string) => {
       if (exitHandledRef.current === noteId) {
@@ -43,10 +50,9 @@ export function useNoteCompleteReorder(projectId: string) {
       setExitingNoteId(null);
       setHiddenNoteId(noteId);
 
-      void finalizeNoteListReorder(queryClient, projectId).finally(() => {
-        setHiddenNoteId(null);
-        exitHandledRef.current = null;
-      });
+      finalizeNoteListReorder(queryClient, projectId);
+      setHiddenNoteId(null);
+      exitHandledRef.current = null;
     },
     [clearScheduledExit, projectId, queryClient]
   );
@@ -77,6 +83,7 @@ export function useNoteCompleteReorder(projectId: string) {
     exitingNoteId,
     hiddenNoteId,
     scheduleExitAndReorder,
+    cancelScheduledExit,
     handleExitAnimationComplete,
   };
 }

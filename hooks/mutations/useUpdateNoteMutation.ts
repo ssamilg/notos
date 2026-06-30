@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Note } from "@/data/notes";
 import { showMutationError } from "@/lib/query/optimistic";
-import { setNoteInCache, updateNoteInCache } from "@/lib/query/noteCache";
+import { setNoteInCache, updateNoteInCache, reorderNotesInCache } from "@/lib/query/noteCache";
 import { queryKeys } from "@/lib/query/keys";
 import {
   restoreNotesQueries,
@@ -66,6 +66,8 @@ export function useUpdateNoteMutation() {
 
         if (!completeOnly) {
           updatedAt = new Date().toISOString();
+        } else if (input.is_completed === false) {
+          updatedAt = new Date().toISOString();
         }
 
         return {
@@ -77,6 +79,10 @@ export function useUpdateNoteMutation() {
           updated_at: updatedAt,
         };
       });
+
+      if (completeOnly && input.is_completed === false) {
+        reorderNotesInCache(queryClient, input.projectId);
+      }
 
       return { previous };
     },
@@ -90,15 +96,10 @@ export function useUpdateNoteMutation() {
     onSuccess: (serverNote, input) => {
       setNoteInCache(queryClient, serverNote);
       updateNoteInCache(queryClient, input.projectId, input.id, () => serverNote);
+      void queryClient.invalidateQueries({ queryKey: ["notes", input.projectId] });
     },
     onSettled: (_data, _error, input) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.note(input.id) });
-
-      const completeOnly = isCompleteOnlyUpdate(input);
-
-      if (!completeOnly) {
-        void queryClient.invalidateQueries({ queryKey: ["notes", input.projectId] });
-      }
     },
   });
 }

@@ -37,8 +37,13 @@ export function ProjectNotesView({ projectId }: ProjectNotesViewProps) {
   const createNoteMutation = useCreateNoteMutation(projectId, filters);
   const updateProjectMutation = useUpdateProjectMutation();
   const updateNoteMutation = useUpdateNoteMutation();
-  const { exitingNoteId, hiddenNoteId, scheduleExitAndReorder, handleExitAnimationComplete } =
-    useNoteCompleteReorder(projectId);
+  const {
+    exitingNoteId,
+    hiddenNoteId,
+    scheduleExitAndReorder,
+    cancelScheduledExit,
+    handleExitAnimationComplete,
+  } = useNoteCompleteReorder(projectId);
 
   const project = projects.find((item) => item.id === projectId);
 
@@ -87,7 +92,13 @@ export function ProjectNotesView({ projectId }: ProjectNotesViewProps) {
       exitingNoteId={exitingNoteId}
       hiddenNoteId={hiddenNoteId}
       onExitAnimationComplete={handleExitAnimationComplete}
-      onToggleComplete={(id, isCompleted) =>
+      onToggleComplete={(id, isCompleted) => {
+        if (isCompleted) {
+          scheduleExitAndReorder(id);
+        } else {
+          cancelScheduledExit();
+        }
+
         updateNoteMutation.mutate(
           {
             projectId,
@@ -95,12 +106,12 @@ export function ProjectNotesView({ projectId }: ProjectNotesViewProps) {
             is_completed: isCompleted,
           },
           {
-            onSuccess: () => {
-              scheduleExitAndReorder(id);
+            onError: () => {
+              cancelScheduledExit();
             },
           }
-        )
-      }
+        );
+      }}
     />
   );
 

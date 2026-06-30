@@ -105,9 +105,8 @@ export function reorderNotesInCache(queryClient: QueryClient, projectId: string)
   }
 }
 
-export async function finalizeNoteListReorder(queryClient: QueryClient, projectId: string) {
+export function finalizeNoteListReorder(queryClient: QueryClient, projectId: string) {
   reorderNotesInCache(queryClient, projectId);
-  await queryClient.invalidateQueries({ queryKey: ["notes", projectId] });
   blurActiveElement();
 }
 
