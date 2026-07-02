@@ -6,7 +6,7 @@ import type { Note } from "@/data/notes";
 import type { NoteFilters } from "@/lib/query/keys";
 import { useTagsQuery } from "@/hooks/queries/useTagsQuery";
 import { NoteListItem } from "@/app/(dashboard)/project/[id]/_components/NoteListItem";
-import { TagAutocomplete } from "@/components/TagAutocomplete";
+import { TagInput } from "@/components/TagInput";
 import { GlowButton } from "@/components/glow-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -223,10 +223,11 @@ export function NoteList({
           tabIndex={0}
         />
 
-        <TagAutocomplete
-          tags={tags.map((tag) => ({ id: tag.id, name: tag.name }))}
+        <TagInput
+          mode="single"
+          options={tags.map((tag) => ({ id: tag.id, name: tag.name }))}
           value={urlTagId ?? null}
-          onValueChange={(tagId) => {
+          onChange={(tagId) => {
             onApplyFilters(searchInputRef.current?.value ?? "", tagId);
           }}
         />

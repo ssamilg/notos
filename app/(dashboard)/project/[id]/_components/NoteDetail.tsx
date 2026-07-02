@@ -274,9 +274,9 @@ export function NoteDetail({
   if (isEditing) {
     tagRowStart = (
       <TagInput
-        tags={draft.tags}
+        value={draft.tags}
         onChange={(tags) => setDraft({ ...draft, tags })}
-        suggestions={tagSuggestions.map((tag) => ({ id: tag.id, name: tag.name }))}
+        options={tagSuggestions.map((tag) => ({ id: tag.id, name: tag.name }))}
         disabled={isSaving}
       />
     );
