@@ -44,3 +44,12 @@ NOTOS is a minimal note-taking app that allows you to create, read, update, and 
 - 2026-06-27: Project and tag lists moved to explicit Edit/Save/Cancel/Delete two-row layouts with local search.
 - 2026-06-27: Universal ConfirmationModal added for project, tag, and note deletions.
 - 2026-06-27: Note canvas got TagInput autocomplete and a persistent Save split-button with localStorage preference.
+- 2026-06-28: Repo cleanup and continued UI/UX refinements for in-place editing and metadata display.
+- 2026-06-29: DashboardListItem shared component added; project dashboard tabs wired with local search.
+- 2026-06-29: Inline note completion toggle added in list and detail views with optimistic React Query cache updates.
+- 2026-06-29: Note list pagination upgraded to cursor-based infinite scroll with completion-aware cursors and incomplete-first sort order.
+- 2026-06-29: NoteListItem extracted with strikethrough styling; completed notes animate out and reorder via useNoteCompleteReorder.
+- 2026-06-30: Exit-animation cancel added when completion is toggled back before reorder runs.
+- 2026-06-30: NoteList hover and transition styling polished.
+- 2026-07-02: TagAutocomplete replaced by TagInput in note list and detail views.
+- 2026-07-06: Soft delete refactor in progress — service-role Supabase client added; project and note deletes moving off the user JWT client with tighter user_id scoping; RLS update policies simplified via new migrations.
