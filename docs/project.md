@@ -11,7 +11,8 @@ NOTOS is a minimal note-taking app that allows you to create, read, update, and 
 - `apps/web` — React + Vite SPA; React Router, React Query, Tailwind CSS v4
 - `apps/api` — Express REST API (`/api/v1`); Supabase JWT auth middleware, CORS for Vite dev port
 - `packages/shared` — shared Zod schemas, API types, and Supabase database types (`@notos/shared`)
-- `next/` — legacy Next.js full-stack app, isolated pending removal; Supabase migrations remain here for now
+- `supabase/` — database migrations applied to the live Supabase project
+- `deprecated_next/` — legacy Next.js full-stack app, isolated pending removal
 
 ## Documentation Index
 - Tech Stack: `docs/stack.md`
@@ -63,3 +64,5 @@ NOTOS is a minimal note-taking app that allows you to create, read, update, and 
 - 2026-07-06: Legacy Next.js app moved into `next/` for staged removal; root wired with pnpm workspaces, shared `tsconfig.base.json`, and Turbo pipelines.
 - 2026-07-06: `@notos/api` scaffolded — Express server with JWT auth middleware, CORS for `localhost:5173`, and v1 routes for projects, notes, and tags.
 - 2026-07-06: `@notos/web` scaffolded — React + Vite SPA with React Router, feature-based `src/` layout, and dashboard UI ported from Next.js.
+- 2026-07-06: Supabase migrations moved to root `supabase/`; legacy Next.js app relocated to `deprecated_next/`.
+- 2026-07-06: Fixed note/project soft delete — SELECT RLS policies no longer require `deleted_at IS NULL`, which blocked UPDATE from completing.
