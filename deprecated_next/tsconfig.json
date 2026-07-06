@@ -19,16 +19,16 @@
       }
     ],
     "paths": {
-      "@/*": ["../deprecated_next/*"]
+      "@/*": ["./*"]
     }
   },
   "include": [
-    "../deprecated_next/next-env.d.ts",
-    "../deprecated_next/**/*.ts",
-    "../deprecated_next/**/*.tsx",
-    "../deprecated_next/.next/types/**/*.ts",
-    "../deprecated_next/.next/dev/types/**/*.ts",
-    "../deprecated_next/**/*.mts"
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
   ],
-  "exclude": ["../deprecated_next/node_modules"]
+  "exclude": ["node_modules"]
 }
