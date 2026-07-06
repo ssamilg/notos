@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { NoteDetail } from "@/app/(dashboard)/project/[id]/_components/NoteDetail";
+import { NoteDetail } from "@/next/app/(dashboard)/project/[id]/_components/NoteDetail";
 import { NoteDetailSkeleton } from "@/components/skeletons/NoteDetailSkeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useDashboardNavigation } from "@/context/DashboardNavigationProvider";

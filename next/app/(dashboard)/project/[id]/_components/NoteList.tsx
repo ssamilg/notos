@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Note } from "@/data/notes";
 import type { NoteFilters } from "@/lib/query/keys";
 import { useTagsQuery } from "@/hooks/queries/useTagsQuery";
-import { NoteListItem } from "@/app/(dashboard)/project/[id]/_components/NoteListItem";
+import { NoteListItem } from "@/next/app/(dashboard)/project/[id]/_components/NoteListItem";
 import { TagInput } from "@/components/TagInput";
 import { GlowButton } from "@/components/glow-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";

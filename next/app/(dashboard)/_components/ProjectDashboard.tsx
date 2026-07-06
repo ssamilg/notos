@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 import type { ProjectWithCount } from "@/data/projects";
 import { useDashboardNavigation } from "@/context/DashboardNavigationProvider";
-import { DashboardTabHeader } from "@/app/(dashboard)/_components/DashboardTabHeader";
-import { ProjectList } from "@/app/(dashboard)/_components/ProjectList";
-import { TagManager } from "@/app/(dashboard)/_components/TagManager";
+import { DashboardTabHeader } from "@/next/app/(dashboard)/_components/DashboardTabHeader";
+import { ProjectList } from "@/next/app/(dashboard)/_components/ProjectList";
+import { TagManager } from "@/next/app/(dashboard)/_components/TagManager";
 import { ProjectListSkeleton } from "@/components/skeletons/ProjectListSkeleton";
 import { ConfirmationModal } from "@/components/ConfirmationModal";
 import { SearchInput } from "@/components/SearchInput";

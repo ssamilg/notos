@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ProjectWithCount } from "@/data/projects";
-import { DashboardListItem } from "@/app/(dashboard)/_components/DashboardListItem";
+import { DashboardListItem } from "@/next/app/(dashboard)/_components/DashboardListItem";
 import { DateDisplay } from "@/components/DateDisplay";
 import { GlowButton } from "@/components/glow-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";

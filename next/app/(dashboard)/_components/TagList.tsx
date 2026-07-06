@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { TagWithCount } from "@/data/tags";
-import { DashboardListItem } from "@/app/(dashboard)/_components/DashboardListItem";
+import { DashboardListItem } from "@/next/app/(dashboard)/_components/DashboardListItem";
 import { GlowButton } from "@/components/glow-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 

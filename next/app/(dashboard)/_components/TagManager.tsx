@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { TagWithCount } from "@/data/tags";
-import { TagList } from "@/app/(dashboard)/_components/TagList";
-import { TagDeleteDialog } from "@/app/(dashboard)/_components/TagDeleteDialog";
+import { TagList } from "@/next/app/(dashboard)/_components/TagList";
+import { TagDeleteDialog } from "@/next/app/(dashboard)/_components/TagDeleteDialog";
 import { TagListSkeleton } from "@/components/skeletons/TagListSkeleton";
 import { SearchInput } from "@/components/SearchInput";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";

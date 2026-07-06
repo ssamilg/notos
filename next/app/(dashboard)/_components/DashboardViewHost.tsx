@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ProjectDashboard } from "@/app/(dashboard)/_components/ProjectDashboard";
-import { ProjectNotesView } from "@/app/(dashboard)/_components/ProjectNotesView";
-import { NoteDetailView } from "@/app/(dashboard)/_components/NoteDetailView";
+import { ProjectDashboard } from "@/next/app/(dashboard)/_components/ProjectDashboard";
+import { ProjectNotesView } from "@/next/app/(dashboard)/_components/ProjectNotesView";
+import { NoteDetailView } from "@/next/app/(dashboard)/_components/NoteDetailView";
 import { useDashboardNavigation } from "@/context/DashboardNavigationProvider";
 
 export function DashboardViewHost() {
