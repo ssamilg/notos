@@ -2,15 +2,22 @@
 
 **Start Date:** 2026-06-23
 **Current Status:** Active Development
-**Tech Stack:** Next.js, Tailwind CSS, shadcn/ui, TypeScript, Supabase
+**Tech Stack:** Turborepo, pnpm, React + Vite, Node.js + Express, Tailwind CSS, TypeScript, Supabase
 
 ## Description
 NOTOS is a minimal note-taking app that allows you to create, read, update, and delete notes.
+
+## Repository Structure
+- `apps/web` — React + Vite SPA; React Router, React Query, Tailwind CSS v4
+- `apps/api` — Express REST API (`/api/v1`); Supabase JWT auth middleware, CORS for Vite dev port
+- `packages/shared` — shared Zod schemas, API types, and Supabase database types (`@notos/shared`)
+- `next/` — legacy Next.js full-stack app, isolated pending removal; Supabase migrations remain here for now
 
 ## Documentation Index
 - Tech Stack: `docs/stack.md`
 - Product Requirements: `docs/PRD.md`
 - System Design: `docs/sdd.md`
+- Monorepo Architecture: `docs/adr-006.md`
 - Active Tasks: `docs/tasks.md`
 
 ## Progress Logs
@@ -52,4 +59,7 @@ NOTOS is a minimal note-taking app that allows you to create, read, update, and 
 - 2026-06-30: Exit-animation cancel added when completion is toggled back before reorder runs.
 - 2026-06-30: NoteList hover and transition styling polished.
 - 2026-07-02: TagAutocomplete replaced by TagInput in note list and detail views.
-- 2026-07-06: Soft delete refactor in progress — service-role Supabase client added; project and note deletes moving off the user JWT client with tighter user_id scoping; RLS update policies simplified via new migrations.
+- 2026-07-06: ADR-006 accepted — monorepo with Turborepo, client-server split, React + Vite frontend, Express backend, and `@notos/shared` workspace.
+- 2026-07-06: Legacy Next.js app moved into `next/` for staged removal; root wired with pnpm workspaces, shared `tsconfig.base.json`, and Turbo pipelines.
+- 2026-07-06: `@notos/api` scaffolded — Express server with JWT auth middleware, CORS for `localhost:5173`, and v1 routes for projects, notes, and tags.
+- 2026-07-06: `@notos/web` scaffolded — React + Vite SPA with React Router, feature-based `src/` layout, and dashboard UI ported from Next.js.
