@@ -149,7 +149,7 @@ export function NoteDetail({
       return;
     }
 
-    if (draftsEqual(draft, savedSnapshotRef.current) && !isDraft) {
+    if (draftsEqual(draft, savedSnapshotRef.current)) {
       setIsEditing(false);
       return;
     }
@@ -220,11 +220,6 @@ export function NoteDetail({
   }
 
   function handleCancel() {
-    if (isDraft) {
-      onCancel();
-      return;
-    }
-
     setDraft(savedSnapshotRef.current);
     setIsEditing(false);
   }
@@ -280,7 +275,6 @@ export function NoteDetail({
 
       <GlowButton
         type="button"
-        className="mt-5"
         onClick={handleDeleteRequest}
         disabled={isDeleting}
         tabIndex={0}
@@ -337,28 +331,26 @@ export function NoteDetail({
 
   const breadcrumbHeader = isEditing ? (
     <BreadcrumbHeader
-      projectName={projectName}
+      parentLabel={projectName}
       title={note.title}
       isEditing={isEditing}
       isCompleted={note.is_completed}
       titleValue={draft.title}
       updatedAt={note.updated_at}
-      onProjectClick={onBack}
+      onParentClick={onBack}
       onTitleChange={(value) => setDraft({ ...draft, title: value })}
       titleInputRef={titleInputRef}
       titleTabIndex={1}
+      titleAriaLabel="Note title"
       disabled={isSaving}
     />
   ) : (
     <BreadcrumbHeader
-      projectName={projectName}
+      parentLabel={projectName}
       title={note.title}
-      isEditing={isEditing}
       isCompleted={note.is_completed}
-      titleValue={draft.title}
       updatedAt={note.updated_at}
-      onProjectClick={onBack}
-      onTitleChange={(value) => setDraft({ ...draft, title: value })}
+      onParentClick={onBack}
       titleInputRef={titleInputRef}
       disabled={isSaving}
     />
@@ -375,7 +367,7 @@ export function NoteDetail({
     >
       <div
         ref={stickyHeaderRef}
-        className="sticky top-0 z-20 -mx-6 mb-8 bg-background/95 px-6 pt-8 pb-4 backdrop-blur-sm"
+        className="sticky top-0 z-20 -mx-6 mb-8 bg-background/95 px-6 pb-4 backdrop-blur-sm"
       >
         {breadcrumbHeader}
         <div className="flex flex-wrap gap-4">{tagContent}</div>

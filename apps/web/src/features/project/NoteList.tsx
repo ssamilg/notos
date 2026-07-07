@@ -4,6 +4,7 @@ import type { NoteFilters } from "@/lib/query/keys";
 import { useTagsQuery } from "@/hooks/queries/useTagsQuery";
 import { NoteListItem } from "@/features/project/NoteListItem";
 import { TagInput } from "@/components/TagInput";
+import { BreadcrumbHeader } from "@/components/BreadcrumbHeader";
 import { GlowButton } from "@/components/glow-button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -123,32 +124,6 @@ export function NoteList({
     }
   }
 
-  let headerTitle = (
-    <button
-      type="button"
-      className="text-heading glow-text cursor-pointer text-left"
-      onClick={startEditingName}
-      tabIndex={0}
-    >
-      {projectName}
-    </button>
-  );
-
-  if (isEditingName) {
-    headerTitle = (
-      <input
-        ref={nameInputRef}
-        className="input-bare text-heading glow-text w-full"
-        value={draftName}
-        onChange={(event) => setDraftName(event.target.value)}
-        onBlur={saveProjectName}
-        onKeyDown={handleNameKeyDown}
-        aria-label="Project name"
-        tabIndex={0}
-      />
-    );
-  }
-
   let listBody = (
     <ul className="note-list list-none p-0">
       {notes
@@ -186,17 +161,21 @@ export function NoteList({
 
   return (
     <div>
-      <button
-        type="button"
-        className="text-label mb-6 inline-block cursor-pointer text-muted-foreground hover:text-foreground"
-        onClick={onBack}
-        tabIndex={0}
-      >
-        ← Back to Projects
-      </button>
-
-      <div className="list-header">
-        {headerTitle}
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <BreadcrumbHeader
+          parentLabel="projects"
+          title={projectName}
+          onParentClick={onBack}
+          isEditing={isEditingName}
+          titleValue={draftName}
+          onTitleChange={setDraftName}
+          onTitleClick={startEditingName}
+          onTitleBlur={saveProjectName}
+          onTitleKeyDown={handleNameKeyDown}
+          titleInputRef={nameInputRef}
+          titleAriaLabel="Project name"
+          className="mb-0 min-w-0 flex-1"
+        />
         <GlowButton type="button" onClick={handleNewNote} tabIndex={0}>
           + New Note
         </GlowButton>
