@@ -27,6 +27,26 @@ function isCompleteOnlyUpdate(input: UpdateNoteInput) {
   );
 }
 
+function applyNoteUpdate(input: UpdateNoteInput, note: Note): Note {
+  const completeOnly = isCompleteOnlyUpdate(input);
+  let updatedAt = note.updated_at;
+
+  if (!completeOnly) {
+    updatedAt = new Date().toISOString();
+  } else if (input.is_completed === false) {
+    updatedAt = new Date().toISOString();
+  }
+
+  return {
+    ...note,
+    title: input.title ?? note.title,
+    text: input.text ?? note.text,
+    tags: input.tags ?? note.tags,
+    is_completed: input.is_completed ?? note.is_completed,
+    updated_at: updatedAt,
+  };
+}
+
 export function useUpdateNoteMutation() {
   const queryClient = useQueryClient();
 
@@ -58,37 +78,32 @@ export function useUpdateNoteMutation() {
     },
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: ["notes", input.projectId] });
+      await queryClient.cancelQueries({ queryKey: queryKeys.note(input.id) });
       const previous = await snapshotNotesQueries(queryClient, input.projectId);
+      const previousNote = queryClient.getQueryData<Note>(queryKeys.note(input.id));
       const completeOnly = isCompleteOnlyUpdate(input);
 
-      updateNoteInCache(queryClient, input.projectId, input.id, (note) => {
-        let updatedAt = note.updated_at;
+      updateNoteInCache(queryClient, input.projectId, input.id, (note) => applyNoteUpdate(input, note));
 
-        if (!completeOnly) {
-          updatedAt = new Date().toISOString();
-        } else if (input.is_completed === false) {
-          updatedAt = new Date().toISOString();
-        }
+      const cachedNote = queryClient.getQueryData<Note>(queryKeys.note(input.id));
 
-        return {
-          ...note,
-          title: input.title ?? note.title,
-          text: input.text ?? note.text,
-          tags: input.tags ?? note.tags,
-          is_completed: input.is_completed ?? note.is_completed,
-          updated_at: updatedAt,
-        };
-      });
+      if (cachedNote) {
+        setNoteInCache(queryClient, applyNoteUpdate(input, cachedNote));
+      }
 
       if (completeOnly && input.is_completed === false) {
         reorderNotesInCache(queryClient, input.projectId);
       }
 
-      return { previous };
+      return { previous, previousNote };
     },
     onError: (error, input, context) => {
       if (context?.previous) {
         restoreNotesQueries(queryClient, context.previous);
+      }
+
+      if (context?.previousNote !== undefined) {
+        queryClient.setQueryData(queryKeys.note(input.id), context.previousNote);
       }
 
       showMutationError(error, "Failed to update note");

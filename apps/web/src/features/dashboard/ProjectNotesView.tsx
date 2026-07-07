@@ -16,6 +16,7 @@ import {
   writeNoteFiltersToLocation,
 } from "@/lib/navigation/dashboardView";
 import type { NoteFilters } from "@/lib/query/keys";
+import { DEFAULT_NOTE_TEMPLATE } from "@/constants/templates";
 
 type ProjectNotesViewProps = {
   projectId: string;
@@ -70,7 +71,7 @@ export function ProjectNotesView({ projectId }: ProjectNotesViewProps) {
       id: noteId,
       projectId,
       title: "Untitled",
-      text: "",
+      text: DEFAULT_NOTE_TEMPLATE,
       tags: [],
       is_completed: false,
     });

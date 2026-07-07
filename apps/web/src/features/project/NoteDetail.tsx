@@ -1,7 +1,9 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Note } from "@/types/domain";
-import { DateDisplay } from "@/components/DateDisplay";
+import { BreadcrumbHeader } from "@/components/BreadcrumbHeader";
 import { ConfirmationModal } from "@/components/ConfirmationModal";
+import { NoteActionRail } from "@/components/NoteActionRail";
+import { NoteContentFrame } from "@/components/NoteContentFrame";
 import { TagDisplay } from "@/components/TagDisplay";
 import { TagInput } from "@/components/TagInput";
 import { useTagsQuery } from "@/hooks/queries/useTagsQuery";
@@ -18,7 +20,7 @@ type NoteDraft = {
 
 type NoteDetailProps = {
   note: Note;
-  projectId: string;
+  projectName: string;
   isDraft?: boolean;
   onSave: (input: {
     title?: string;
@@ -64,7 +66,7 @@ function draftsEqual(a: NoteDraft, b: NoteDraft) {
 
 export function NoteDetail({
   note,
-  projectId,
+  projectName,
   isDraft = false,
   onSave,
   onCancel,
@@ -75,12 +77,19 @@ export function NoteDetail({
   onSaveAndNew,
 }: NoteDetailProps) {
   const { data: tagSuggestions = [] } = useTagsQuery();
-  const [isEditing, setIsEditing] = useState(isDraft);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<NoteDraft>(() => noteToDraft(note));
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const savedSnapshotRef = useRef<NoteDraft>(noteToDraft(note));
+
+  useEffect(() => {
+    if (isEditing) {
+      titleInputRef.current?.focus();
+    }
+  }, [isEditing]);
 
   function startEditing() {
     setDraft(noteToDraft(note));
@@ -200,72 +209,82 @@ export function NoteDetail({
     onDelete();
   }
 
-  let headerActions = (
-    <>
-      <GlowButton type="button" onClick={handleDeleteRequest} disabled={isDeleting} tabIndex={0}>
-        Delete
-      </GlowButton>
+  const editTabIndex = isEditing ? { title: 1, tags: 2, content: 3, save: 4 } : null;
 
-      <GlowButton type="button" onClick={onToggleComplete} disabled={isDeleting} tabIndex={0}>
+  let saveSplitButton = (
+    <SaveSplitButton
+      disabled={isSaving}
+      saving={isSaving}
+      onSave={handleSave}
+      onSaveAndExit={handleSaveAndExit}
+      onSaveAndNew={handleSaveAndNew}
+    />
+  );
+
+  if (editTabIndex) {
+    saveSplitButton = (
+      <SaveSplitButton
+        disabled={isSaving}
+        saving={isSaving}
+        primaryTabIndex={editTabIndex.save}
+        onSave={handleSave}
+        onSaveAndExit={handleSaveAndExit}
+        onSaveAndNew={handleSaveAndNew}
+      />
+    );
+  }
+
+  let actionContent = (
+    <>
+      <GlowButton
+        type="button"
+        onClick={onToggleComplete}
+        disabled={isDeleting}
+        tabIndex={0}
+      >
         {note.is_completed ? "Mark Incomplete" : "Mark Done"}
       </GlowButton>
 
       <GlowButton type="button" onClick={startEditing} disabled={isDeleting} tabIndex={0}>
         Edit
       </GlowButton>
+
+      <GlowButton
+        type="button"
+        className="mt-5"
+        onClick={handleDeleteRequest}
+        disabled={isDeleting}
+        tabIndex={0}
+      >
+        Delete
+      </GlowButton>
     </>
   );
 
   if (isEditing) {
-    headerActions = (
+    actionContent = (
       <>
-        <GlowButton type="button" onClick={handleCancel} disabled={isSaving} tabIndex={0}>
+        <GlowButton type="button" onClick={handleCancel} disabled={isSaving} tabIndex={-1}>
           Cancel
         </GlowButton>
 
-        <SaveSplitButton
-          disabled={isSaving}
-          saving={isSaving}
-          onSave={handleSave}
-          onSaveAndExit={handleSaveAndExit}
-          onSaveAndNew={handleSaveAndNew}
-        />
+        {saveSplitButton}
       </>
     );
   }
 
-  let titleContent = (
-    <h1
-      className={`text-heading min-w-0 flex-1 glow-text-intense ${
-        note.is_completed ? "text-muted-foreground line-through" : ""
-      }`}
-    >
-      {note.title}
-    </h1>
-  );
+  let tagContent = <TagDisplay tags={note.tags} className="font-mono text-[1.1rem] glow-text" />;
 
   if (isEditing) {
-    titleContent = (
-      <input
-        className="input-edit text-heading min-w-0 flex-1 glow-text-intense"
-        value={draft.title}
-        onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-        aria-label="Note title"
-        disabled={isSaving}
-        tabIndex={0}
-      />
-    );
-  }
-
-  let tagRowStart = <TagDisplay tags={note.tags} />;
-
-  if (isEditing) {
-    tagRowStart = (
+    tagContent = (
       <TagInput
+        variant="inline"
         value={draft.tags}
         onChange={(tags) => setDraft({ ...draft, tags })}
         options={tagSuggestions.map((tag) => ({ id: tag.id, name: tag.name }))}
         disabled={isSaving}
+        tabIndex={2}
+        className="font-mono text-[1.1rem]"
       />
     );
   }
@@ -277,43 +296,58 @@ export function NoteDetail({
   if (isEditing) {
     bodyContent = (
       <textarea
-        className="input-edit text-body min-h-[50vh] resize-none"
+        className="input-edit-subtle text-body min-h-[50vh] w-full resize-none leading-relaxed"
         value={draft.text}
         placeholder="There should be some text here..."
         onChange={(event) => setDraft({ ...draft, text: event.target.value })}
         aria-label="Note content"
         disabled={isSaving}
-        tabIndex={0}
+        tabIndex={3}
       />
     );
   }
 
+  const breadcrumbHeader = isEditing ? (
+    <BreadcrumbHeader
+      projectName={projectName}
+      title={note.title}
+      isEditing={isEditing}
+      isCompleted={note.is_completed}
+      titleValue={draft.title}
+      updatedAt={note.updated_at}
+      onProjectClick={onBack}
+      onTitleChange={(value) => setDraft({ ...draft, title: value })}
+      titleInputRef={titleInputRef}
+      titleTabIndex={1}
+      disabled={isSaving}
+    />
+  ) : (
+    <BreadcrumbHeader
+      projectName={projectName}
+      title={note.title}
+      isEditing={isEditing}
+      isCompleted={note.is_completed}
+      titleValue={draft.title}
+      updatedAt={note.updated_at}
+      onProjectClick={onBack}
+      onTitleChange={(value) => setDraft({ ...draft, title: value })}
+      titleInputRef={titleInputRef}
+      disabled={isSaving}
+    />
+  );
+
   return (
-    <article>
-      <button
-        type="button"
-        className="text-label mb-8 inline-block cursor-pointer text-muted-foreground hover:text-foreground"
-        onClick={onBack}
-        tabIndex={0}
-      >
-        ← Back to Notes
-      </button>
+    <article className="mx-auto w-full max-w-[950px]">
+      {breadcrumbHeader}
 
-      <header className="mb-4 flex items-end justify-between gap-2">
-        {titleContent}
-        {headerActions}
-      </header>
+      <div className="mb-8 flex flex-wrap gap-4">{tagContent}</div>
 
-      <div className="mb-4 flex items-center justify-between gap-4">
-        {tagRowStart}
-        <div className="flex shrink-0 items-center gap-4">
-          {isEditing ? null : (
-            <DateDisplay updatedAt={note.updated_at} createdAt={note.created_at} />
-          )}
-        </div>
+      <NoteActionRail variant="mobile">{actionContent}</NoteActionRail>
+
+      <div className="flex flex-col items-start gap-0 md:flex-row md:gap-[60px]">
+        <NoteContentFrame>{bodyContent}</NoteContentFrame>
+        <NoteActionRail variant="desktop">{actionContent}</NoteActionRail>
       </div>
-
-      <div className="mt-6">{bodyContent}</div>
 
       <ConfirmationModal
         open={deleteDialogOpen}

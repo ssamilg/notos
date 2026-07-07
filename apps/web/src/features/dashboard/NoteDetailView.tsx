@@ -10,6 +10,8 @@ import { useUpdateNoteMutation } from "@/hooks/mutations/useUpdateNoteMutation";
 import { useDeleteNoteMutation } from "@/hooks/mutations/useDeleteNoteMutation";
 import { useCreateNoteMutation } from "@/hooks/mutations/useCreateNoteMutation";
 import { readNoteFiltersFromLocation } from "@/lib/navigation/dashboardView";
+import { DEFAULT_NOTE_TEMPLATE } from "@/constants/templates";
+import { useProjectsQuery } from "@/hooks/queries/useProjectsQuery";
 
 type NoteSaveInput = {
   title?: string;
@@ -22,8 +24,8 @@ type NoteDetailViewProps = {
   noteId: string;
 };
 
-function isNewNote(title: string, text: string) {
-  return title === "Untitled" && text.trim().length === 0;
+function isNewNote(title: string) {
+  return title === "Untitled";
 }
 
 export function NoteDetailView({ noteId }: NoteDetailViewProps) {
@@ -33,10 +35,12 @@ export function NoteDetailView({ noteId }: NoteDetailViewProps) {
   const deleteNoteMutation = useDeleteNoteMutation();
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const { data: projects = [] } = useProjectsQuery();
   const projectId = note?.project_id ?? "";
+  const project = projects.find((item) => item.id === projectId);
   const filters = readNoteFiltersFromLocation();
   const createNoteMutation = useCreateNoteMutation(projectId, filters);
-  const isDraft = note ? isNewNote(note.title, note.text) : false;
+  const isDraft = note ? isNewNote(note.title) : false;
 
   function handleBack() {
     if (!projectId) {
@@ -100,7 +104,7 @@ export function NoteDetailView({ noteId }: NoteDetailViewProps) {
       id: nextNoteId,
       projectId: note.project_id,
       title: "Untitled",
-      text: "",
+      text: DEFAULT_NOTE_TEMPLATE,
       tags: [],
       is_completed: false,
     });
@@ -149,7 +153,7 @@ export function NoteDetailView({ noteId }: NoteDetailViewProps) {
       <NoteDetail
         key={noteId}
         note={note}
-        projectId={note.project_id}
+        projectName={project?.name ?? "Project"}
         isDraft={isDraft}
         onSave={handleSave}
         onCancel={handleBack}

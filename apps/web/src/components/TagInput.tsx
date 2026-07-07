@@ -14,6 +14,8 @@ type TagInputBaseProps = {
   inputClassName?: string;
   placeholder?: string;
   disabled?: boolean;
+  tabIndex?: number;
+  variant?: "default" | "inline";
   "aria-label"?: string;
 };
 
@@ -49,6 +51,8 @@ export function TagInput(props: TagInputProps) {
   const placeholder = props.placeholder ?? (mode === "single" ? "[Filter by tag]" : undefined);
   const ariaLabel = props["aria-label"] ?? (mode === "single" ? "Filter by tag" : "Note tags");
   const clearLabel = isSingleMode(props) ? (props.clearLabel ?? "All tags") : "All tags";
+  const tabIndex = props.tabIndex ?? 0;
+  const variant = props.variant ?? "default";
 
   const selectedTag = isSingleMode(props)
     ? (props.options.find((tag) => tag.id === props.value) ?? null)
@@ -140,6 +144,20 @@ export function TagInput(props: TagInputProps) {
     }
 
     openDropdown();
+  }
+
+  function handleInputBlur(event: React.FocusEvent<HTMLInputElement>) {
+    const nextTarget = event.relatedTarget;
+
+    if (nextTarget instanceof Node && containerRef.current?.contains(nextTarget)) {
+      return;
+    }
+
+    closeDropdown();
+  }
+
+  function focusInput() {
+    inputRef.current?.focus();
   }
 
   function handleInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -331,20 +349,73 @@ export function TagInput(props: TagInputProps) {
           placeholder={placeholder}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
           onKeyDown={handleInputKeyDown}
           aria-label={ariaLabel}
           disabled={disabled}
-          tabIndex={0}
+          tabIndex={tabIndex}
         />
         {dropdown}
       </div>
     );
   } else if (!isSingleMode(props)) {
-    content = (
-      <div ref={containerRef} className={cn("relative min-w-0 flex-1", props.className)}>
-        <div className="input-edit flex flex-wrap items-center gap-2 py-1">
+    const tagClassName =
+      variant === "inline"
+        ? "font-mono text-[1.1rem] glow-text shrink-0"
+        : "text-caption text-muted-foreground";
+
+    const inputClassName =
+      variant === "inline"
+        ? cn(
+            "input-bare min-w-[120px] flex-1 font-mono text-[1.1rem] text-muted-foreground",
+            props.inputClassName
+          )
+        : cn(
+            "input-bare text-caption min-w-[120px] flex-1 text-muted-foreground",
+            props.inputClassName
+          );
+
+    const wrapperClassName =
+      variant === "inline"
+        ? cn("relative min-w-0 flex-1", props.className)
+        : cn("relative min-w-0 flex-1", props.className);
+
+    let tagField = (
+      <div className="input-edit flex flex-wrap items-center gap-2 py-1">
+        {props.value.map((tag) => (
+          <span key={tag} className={tagClassName}>
+            #{tag}
+          </span>
+        ))}
+        <input
+          ref={inputRef}
+          type="text"
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-controls={listboxId}
+          aria-autocomplete="list"
+          className={inputClassName}
+          value={query}
+          onChange={handleInputChange}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
+          onKeyDown={handleInputKeyDown}
+          placeholder={props.value.length === 0 ? (placeholder ?? "Add tags…") : ""}
+          aria-label={ariaLabel}
+          disabled={disabled}
+          tabIndex={tabIndex}
+        />
+      </div>
+    );
+
+    if (variant === "inline") {
+      tagField = (
+        <div
+          className="field-edit-subtle flex w-full cursor-text flex-wrap items-center gap-4"
+          onClick={focusInput}
+        >
           {props.value.map((tag) => (
-            <span key={tag} className="text-caption text-muted-foreground">
+            <span key={tag} className={cn(tagClassName, "cursor-text")} onClick={focusInput}>
               #{tag}
             </span>
           ))}
@@ -355,20 +426,24 @@ export function TagInput(props: TagInputProps) {
             aria-expanded={isOpen}
             aria-controls={listboxId}
             aria-autocomplete="list"
-            className={cn(
-              "input-bare text-caption min-w-[120px] flex-1 text-muted-foreground",
-              props.inputClassName
-            )}
+            className={inputClassName}
             value={query}
             onChange={handleInputChange}
             onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
             onKeyDown={handleInputKeyDown}
             placeholder={props.value.length === 0 ? (placeholder ?? "Add tags…") : ""}
             aria-label={ariaLabel}
             disabled={disabled}
-            tabIndex={0}
+            tabIndex={tabIndex}
           />
         </div>
+      );
+    }
+
+    content = (
+      <div ref={containerRef} className={wrapperClassName}>
+        {tagField}
         {dropdown}
       </div>
     );

@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 type SaveSplitButtonProps = {
   disabled?: boolean;
   saving?: boolean;
+  primaryTabIndex?: number;
   onSave: () => void;
   onSaveAndExit: () => void;
   onSaveAndNew: () => void;
@@ -28,6 +29,7 @@ const MENU_OPTIONS: Array<{ action: SaveAction; label: string }> = [
 export function SaveSplitButton({
   disabled = false,
   saving = false,
+  primaryTabIndex,
   onSave,
   onSaveAndExit,
   onSaveAndNew,
@@ -114,7 +116,7 @@ export function SaveSplitButton({
         className="rounded-r-none border-r border-white/15"
         onClick={handlePrimaryClick}
         disabled={disabled || saving}
-        tabIndex={0}
+        tabIndex={primaryTabIndex ?? 0}
       >
         {primaryLabel}
       </GlowButton>
@@ -125,7 +127,7 @@ export function SaveSplitButton({
         disabled={disabled || saving}
         aria-label="Choose save action"
         aria-expanded={menuOpen}
-        tabIndex={0}
+        tabIndex={-1}
       >
         <ChevronDown className="size-4" aria-hidden="true" />
       </GlowButton>

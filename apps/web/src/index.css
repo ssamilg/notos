@@ -455,4 +455,27 @@
     outline: none;
     border-bottom-color: rgba(255, 255, 255, 0.85);
   }
+
+  .input-edit-subtle {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-glowing-white);
+    font-family: inherit;
+    padding-bottom: 0.125rem;
+  }
+
+  .input-edit-subtle:focus {
+    outline: none;
+    border-bottom-color: rgba(255, 255, 255, 0.35);
+  }
+
+  .field-edit-subtle {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    padding-bottom: 0.125rem;
+  }
+
+  .field-edit-subtle:focus-within {
+    border-bottom-color: rgba(255, 255, 255, 0.35);
+  }
 }

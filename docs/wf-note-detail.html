@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOTOS - Note Details (Corner Frames & Responsive Actions)</title>
+<style>
+    :root {
+        --bg-pure-black: #000000;
+        --text-glowing-white: #ffffff;
+        --text-dim: #666666;
+        --text-very-dim: #333333;
+        --glow-subtle: 0 0 10px rgba(255, 255, 255, 0.4);
+        --glow-intense: 0 0 20px rgba(255, 255, 255, 0.8);
+        --border-ghost: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        background-color: var(--bg-pure-black);
+        color: var(--text-glowing-white);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        display: flex;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    .screen {
+        width: 100%;
+        max-width: 950px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Header Layout */
+    .header-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .note-path {
+        font-family: monospace;
+        font-size: 1.1rem;
+        color: var(--text-dim);
+        letter-spacing: -0.5px;
+        cursor: pointer;
+        transition: color 0.2s ease, text-shadow 0.2s ease;
+    }
+
+    .note-path:hover {
+        color: var(--text-glowing-white);
+        text-shadow: var(--glow-subtle);
+    }
+
+    .note-date {
+        font-family: monospace;
+        font-size: 0.95rem;
+        color: var(--text-dim);
+    }
+
+    .tags-row {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .tag {
+        font-size: 1.1rem;
+        color: #999999;
+        font-family: monospace;
+        transition: color 0.2s ease, text-shadow 0.2s ease;
+        cursor: pointer;
+    }
+
+    .tag:hover {
+        color: var(--text-glowing-white);
+        text-shadow: var(--glow-subtle);
+    }
+
+    /* Actions Styling (Shared) */
+    .action-btn {
+        background: none;
+        border: none;
+        color: var(--text-dim);
+        font-family: inherit;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        cursor: pointer;
+        padding: 0;
+        transition: color 0.2s ease, text-shadow 0.2s ease;
+    }
+
+    .action-btn:hover {
+        color: var(--text-glowing-white);
+        text-shadow: var(--glow-subtle);
+    }
+
+    .action-primary {
+        color: #aaaaaa;
+        font-weight: 500;
+    }
+
+    .action-primary:hover {
+        color: var(--text-glowing-white);
+        text-shadow: var(--glow-intense);
+    }
+
+    /* Layout Grid */
+    .main-grid {
+        display: flex;
+        gap: 60px;
+        align-items: flex-start;
+    }
+
+    /* Content Area with Minimal Corner Frames */
+    .content-wrapper {
+        flex: 1;
+        position: relative;
+        padding: 40px;
+    }
+
+    .corner {
+        position: absolute;
+        width: 25px;
+        height: 25px;
+        pointer-events: none;
+    }
+
+    .corner-tl { top: 0; left: 0; border-top: var(--border-ghost); border-left: var(--border-ghost); }
+    .corner-tr { top: 0; right: 0; border-top: var(--border-ghost); border-right: var(--border-ghost); }
+    .corner-bl { bottom: 0; left: 0; border-bottom: var(--border-ghost); border-left: var(--border-ghost); }
+    .corner-br { bottom: 0; right: 0; border-bottom: var(--border-ghost); border-right: var(--border-ghost); }
+
+    .content {
+        font-size: 1.25rem;
+        line-height: 1.8;
+    }
+
+    .content h1 {
+        font-size: 2.5rem;
+        font-weight: 400;
+        margin-top: 0;
+        margin-bottom: 25px;
+        text-shadow: var(--glow-intense);
+        letter-spacing: -1px;
+    }
+
+    .content h1:not(:first-child) {
+        margin-top: 50px;
+    }
+
+    .content ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .content li {
+        position: relative;
+        padding-left: 24px;
+        margin-bottom: 16px;
+        color: #dddddd;
+    }
+
+    .content li::before {
+        content: "•";
+        position: absolute;
+        left: 0;
+        color: var(--text-dim);
+    }
+
+    /* Desktop Side Rail */
+    .desktop-action-rail {
+        width: 140px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+        position: sticky;
+        top: 60px;
+        padding-top: 45px; /* Aligns visually with the first content H1 */
+    }
+
+    .desktop-action-rail .action-btn {
+        text-align: left;
+    }
+
+    /* Mobile Top Actions */
+    .mobile-actions {
+        display: none; /* Hidden on desktop */
+        gap: 20px;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
+    }
+
+    /* Responsive Rules */
+    @media (max-width: 768px) {
+        body {
+            padding: 30px 15px;
+        }
+
+        .main-grid {
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .desktop-action-rail {
+            display: none;
+        }
+
+        .mobile-actions {
+            display: flex;
+        }
+
+        .content-wrapper {
+            padding: 25px 20px;
+        }
+
+        .content h1 {
+            font-size: 2rem;
+        }
+
+        .corner {
+            width: 15px;
+            height: 15px;
+        }
+    }
+</style>
+</head>
+<body>
+
+    <div class="screen">
+
+        <!-- Header -->
+        <div class="header-layout">
+            <div class="meta-row">
+                <div class="note-path">&larr; To-do / Note Details Improvements</div>
+                <div class="note-date">Today, 14:56</div>
+            </div>
+            <div class="tags-row">
+                <span class="tag">#fe</span>
+                <span class="tag">#ui-ux</span>
+            </div>
+        </div>
+
+        <!-- Mobile Actions (Visible only on mobile, top placement) -->
+        <div class="mobile-actions">
+            <button class="action-btn action-primary">Mark Done</button>
+            <button class="action-btn">Edit</button>
+            <button class="action-btn">Save</button>
+            <button class="action-btn" style="color: #555;">Delete</button>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-grid">
+
+            <!-- Left/Top: Content with Corner Frames -->
+            <div class="content-wrapper">
+                <div class="corner corner-tl"></div>
+                <div class="corner corner-tr"></div>
+                <div class="corner corner-bl"></div>
+                <div class="corner corner-br"></div>
+
+                <div class="content">
+                    <h1>Styling</h1>
+                    <ul>
+                        <li>marked out note styling to improved</li>
+                        <li>edit mode style improvements</li>
+                    </ul>
+
+                    <h1>bug fixing</h1>
+                    <ul>
+                        <li>mark note done is not offline first</li>
+                        <li>new should should not be created unless user hit save</li>
+                    </ul>
+
+                    <h1>features</h1>
+                    <ul>
+                        <li>fixing tab flow (title -> tags -> content -> save)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right: Desktop Sticky Action Rail (Hidden on mobile) -->
+            <div class="desktop-action-rail">
+                <button class="action-btn action-primary">Mark Done</button>
+                <button class="action-btn">Edit</button>
+                <button class="action-btn">Save</button>
+                <button class="action-btn" style="margin-top: 20px; color: #555;">Delete</button>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>
