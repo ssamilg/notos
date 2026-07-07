@@ -82,7 +82,7 @@ export function NoteDetail({
   const titleInputRef = useRef<HTMLInputElement>(null);
   const stickyHeaderRef = useRef<HTMLDivElement>(null);
   const [stickyOffset, setStickyOffset] = useState("6rem");
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(isDraft);
   const [draft, setDraft] = useState<NoteDraft>(() => noteToDraft(note));
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
