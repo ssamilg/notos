@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import type { Note } from "@/types/domain";
 import { BreadcrumbHeader } from "@/components/BreadcrumbHeader";
 import { ConfirmationModal } from "@/components/ConfirmationModal";
@@ -10,6 +11,7 @@ import { useTagsQuery } from "@/hooks/queries/useTagsQuery";
 import { SaveSplitButton } from "@/components/SaveSplitButton";
 import { GlowButton } from "@/components/glow-button";
 import { MarkdownContent } from "@/components/MarkdownContent";
+import { AutoResizeTextarea } from "@/components/AutoResizeTextarea";
 
 type NoteDraft = {
   title: string;
@@ -78,6 +80,8 @@ export function NoteDetail({
 }: NoteDetailProps) {
   const { data: tagSuggestions = [] } = useTagsQuery();
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const stickyHeaderRef = useRef<HTMLDivElement>(null);
+  const [stickyOffset, setStickyOffset] = useState("6rem");
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<NoteDraft>(() => noteToDraft(note));
   const [isSaving, setIsSaving] = useState(false);
@@ -90,6 +94,31 @@ export function NoteDetail({
       titleInputRef.current?.focus();
     }
   }, [isEditing]);
+
+  useEffect(() => {
+    const header = stickyHeaderRef.current;
+
+    if (!header) {
+      return;
+    }
+
+    function updateStickyOffset() {
+      if (!header) {
+        return;
+      }
+
+      setStickyOffset(`${header.offsetHeight}px`);
+    }
+
+    updateStickyOffset();
+
+    const observer = new ResizeObserver(updateStickyOffset);
+    observer.observe(header);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isEditing, note.title, note.tags.length, draft.tags.length]);
 
   function startEditing() {
     setDraft(noteToDraft(note));
@@ -295,11 +324,10 @@ export function NoteDetail({
 
   if (isEditing) {
     bodyContent = (
-      <textarea
-        className="input-edit-subtle text-body min-h-[50vh] w-full resize-none leading-relaxed"
+      <AutoResizeTextarea
         value={draft.text}
+        onChange={(text) => setDraft({ ...draft, text })}
         placeholder="There should be some text here..."
-        onChange={(event) => setDraft({ ...draft, text: event.target.value })}
         aria-label="Note content"
         disabled={isSaving}
         tabIndex={3}
@@ -336,11 +364,22 @@ export function NoteDetail({
     />
   );
 
-  return (
-    <article className="mx-auto w-full max-w-[950px]">
-      {breadcrumbHeader}
+  const articleStyle = {
+    "--note-detail-sticky-offset": stickyOffset,
+  } as CSSProperties;
 
-      <div className="mb-8 flex flex-wrap gap-4">{tagContent}</div>
+  return (
+    <article
+      className="mx-auto w-full max-w-[950px]"
+      style={articleStyle}
+    >
+      <div
+        ref={stickyHeaderRef}
+        className="sticky top-0 z-20 -mx-6 mb-8 bg-background/95 px-6 pt-8 pb-4 backdrop-blur-sm"
+      >
+        {breadcrumbHeader}
+        <div className="flex flex-wrap gap-4">{tagContent}</div>
+      </div>
 
       <NoteActionRail variant="mobile">{actionContent}</NoteActionRail>
 

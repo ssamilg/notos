@@ -7,22 +7,25 @@ type NoteContentFrameProps = {
 };
 
 export function NoteContentFrame({ children, className }: NoteContentFrameProps) {
+  const cornerClassName =
+    "pointer-events-none absolute size-[15px] border-white/20 transition-colors duration-200 md:size-[25px] group-focus-within/content:border-white/45";
+
   return (
-    <div className={cn("relative flex-1 p-5 md:p-10", className)}>
+    <div className={cn("group/content relative flex-1 p-5 md:p-10", className)}>
       <span
-        className="pointer-events-none absolute top-0 left-0 size-[15px] border-t border-l border-white/20 md:size-[25px]"
+        className={cn(cornerClassName, "top-0 left-0 border-t border-l")}
         aria-hidden="true"
       />
       <span
-        className="pointer-events-none absolute top-0 right-0 size-[15px] border-t border-r border-white/20 md:size-[25px]"
+        className={cn(cornerClassName, "top-0 right-0 border-t border-r")}
         aria-hidden="true"
       />
       <span
-        className="pointer-events-none absolute bottom-0 left-0 size-[15px] border-b border-l border-white/20 md:size-[25px]"
+        className={cn(cornerClassName, "bottom-0 left-0 border-b border-l")}
         aria-hidden="true"
       />
       <span
-        className="pointer-events-none absolute right-0 bottom-0 size-[15px] border-r border-b border-white/20 md:size-[25px]"
+        className={cn(cornerClassName, "right-0 bottom-0 border-r border-b")}
         aria-hidden="true"
       />
       {children}

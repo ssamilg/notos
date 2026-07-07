@@ -14,7 +14,9 @@ export function NoteActionRail({ children, className, variant }: NoteActionRailP
     <div
       className={cn(
         "flex-col items-start gap-5",
-        isMobile ? "mb-10 flex flex-wrap md:hidden" : "hidden w-[140px] shrink-0 md:sticky md:top-[60px] md:flex md:pt-[45px]",
+        isMobile
+          ? "mb-10 flex flex-wrap md:hidden"
+          : "hidden w-[140px] shrink-0 self-start md:sticky md:top-[var(--note-detail-sticky-offset,6rem)] md:z-10 md:flex md:pt-[45px]",
         className
       )}
     >
