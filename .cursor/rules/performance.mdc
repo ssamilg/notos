@@ -6,7 +6,6 @@ description: "USE WHEN
 - Adding caching, batching, or streaming for scale
 - Setting and measuring performance budgets"
 keywords: ["performance", "profiling", "caching", "latency", "indexes", "bundle", "optimization", "scale"]
-globs: []
 alwaysApply: false
 ---
 

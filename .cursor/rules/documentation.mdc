@@ -6,7 +6,6 @@ description: "USE WHEN
 - Maintaining changelogs or keeping docs in sync with code
 - Reviewing documentation quality in PRs"
 keywords: ["documentation", "readme", "adr", "jsdoc", "changelog", "comments", "architecture", "docs"]
-globs: []
 alwaysApply: false
 ---
 

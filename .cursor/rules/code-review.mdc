@@ -6,7 +6,7 @@ description: "USE WHEN
 - Deciding blocking vs non-blocking feedback
 - Managing review speed and PR size expectations"
 keywords: ["review", "pullrequest", "feedback", "diff", "approval", "pr", "merge", "author"]
-globs: []
+
 alwaysApply: false
 ---
 

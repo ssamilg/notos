@@ -6,7 +6,6 @@ description: "USE WHEN
 - Managing context, file pinning, or incremental refinement
 - Writing or updating .mdc rules for AI tools"
 keywords: ["ai", "prompts", "context", "agents", "cursor", "generation", "refinement", "mdc"]
-globs: []
 alwaysApply: false
 ---
 

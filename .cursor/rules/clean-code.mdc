@@ -6,7 +6,6 @@ description: "USE WHEN
 - Deciding when to abstract or keep code inline
 - Enforcing readable, maintainable code standards"
 keywords: ["naming", "functions", "simplicity", "readability", "complexity", "deadcode", "organization", "clean"]
-globs: []
 alwaysApply: false
 ---
 

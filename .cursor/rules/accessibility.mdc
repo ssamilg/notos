@@ -6,7 +6,6 @@ description: "USE WHEN
 - Checking contrast, alt text, or screen reader compatibility
 - Testing accessibility in PRs or before release"
 keywords: ["accessibility", "aria", "keyboard", "wcag", "semantic", "screenreader", "contrast", "a11y"]
-globs: []
 alwaysApply: false
 ---
 

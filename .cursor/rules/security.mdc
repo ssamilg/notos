@@ -6,7 +6,6 @@ description: "USE WHEN
 - Reviewing dependencies for known vulnerabilities
 - Configuring HTTPS, CSP, CORS, or security headers"
 keywords: ["security", "auth", "validation", "authorization", "secrets", "jwt", "cors", "xss"]
-globs: []
 alwaysApply: false
 ---
 

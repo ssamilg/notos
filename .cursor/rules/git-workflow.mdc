@@ -6,7 +6,6 @@ description: "USE WHEN
 - Rebasing, squashing, or merging feature branches
 - Avoiding secrets or artifacts in version control"
 keywords: ["git", "commits", "branches", "pullrequest", "rebase", "merge", "history", "hooks"]
-globs: []
 alwaysApply: false
 ---
 

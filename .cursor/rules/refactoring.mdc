@@ -6,7 +6,6 @@ description: "USE WHEN
 - Preparing a refactor with tests and small commits
 - Avoiding large refactors mixed with feature work"
 keywords: ["refactoring", "extract", "inline", "guard", "smells", "rename", "tests", "steps"]
-globs: []
 alwaysApply: false
 ---
 

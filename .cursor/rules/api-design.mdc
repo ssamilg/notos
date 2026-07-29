@@ -6,7 +6,6 @@ description: "USE WHEN
 - Reviewing API contracts or auth and rate-limiting rules
 - Standardizing backend service interfaces"
 keywords: ["api", "rest", "endpoints", "http", "pagination", "versioning", "responses", "routes"]
-globs: []
 alwaysApply: false
 ---
 

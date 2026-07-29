@@ -6,7 +6,6 @@ description: "USE WHEN
 - Deciding what to log or redact in production
 - Configuring log aggregation or rotation policies"
 keywords: ["logging", "structured", "correlation", "levels", "tracing", "json", "pii", "observability"]
-globs: []
 alwaysApply: false
 ---
 

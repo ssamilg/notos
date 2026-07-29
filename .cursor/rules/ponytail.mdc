@@ -6,7 +6,6 @@ description: "USE WHEN
 - Preferring deletion, stdlib, or existing dependencies
 - Scoping work to the minimum code that solves the task"
 keywords: ["simplicity", "yagni", "minimal", "stdlib", "dependencies", "scope", "lazy", "boring"]
-globs: []
 alwaysApply: false
 ---
 

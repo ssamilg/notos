@@ -6,7 +6,7 @@ description: "USE WHEN
 - Creating indexes, backfills, or data migrations safely
 - Evaluating migration rollback and lock risk"
 keywords: ["migrations", "database", "schema", "rollback", "ddl", "backfill", "indexes", "sql"]
-globs: []
+
 alwaysApply: false
 ---
 

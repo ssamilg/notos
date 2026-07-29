@@ -6,7 +6,6 @@ description: "USE WHEN
 - Keeping business-logic WHY comments during edits
 - Deciding whether a comment may be safely removed"
 keywords: ["comments", "preserve", "refactoring", "compliance", "tickets", "context", "cleanup", "why"]
-globs: []
 alwaysApply: false
 ---
 

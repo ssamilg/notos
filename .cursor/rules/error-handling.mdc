@@ -6,7 +6,6 @@ description: "USE WHEN
 - Adding retry, timeout, or graceful degradation logic
 - Logging errors with structured context"
 keywords: ["errors", "exceptions", "handling", "retry", "boundaries", "timeout", "recovery", "typed"]
-globs: []
 alwaysApply: false
 ---
 

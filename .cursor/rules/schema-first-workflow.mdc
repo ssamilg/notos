@@ -6,7 +6,7 @@ description: "USE WHEN
 - Validating migrations and seed data before building UI
 - Handling mid-build schema changes with a phased workflow"
 keywords: ["schema", "prd", "models", "contracts", "migrations", "workflow", "orm", "first"]
-globs: []
+
 alwaysApply: false
 ---
 

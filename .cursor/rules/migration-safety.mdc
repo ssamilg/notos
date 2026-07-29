@@ -6,7 +6,6 @@ description: "USE WHEN
 - Renaming columns, dropping tables, or changing types safely
 - Testing migrations on production-size datasets"
 keywords: ["migrations", "rollback", "downtime", "schema", "deploy", "backfill", "compatible", "sql"]
-globs: []
 alwaysApply: false
 ---
 

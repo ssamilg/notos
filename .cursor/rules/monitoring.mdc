@@ -6,7 +6,6 @@ description: "USE WHEN
 - Configuring observability for services or infrastructure
 - Tuning alerts to reduce noise and improve triage"
 keywords: ["monitoring", "metrics", "alerting", "slo", "dashboards", "observability", "health", "latency"]
-globs: []
 alwaysApply: false
 ---
 

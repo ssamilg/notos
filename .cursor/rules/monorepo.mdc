@@ -6,7 +6,6 @@ description: "USE WHEN
 - Configuring Turborepo, Nx, or CI for affected builds
 - Coordinating versioning with changesets or similar tools"
 keywords: ["monorepo", "workspace", "packages", "turborepo", "boundaries", "dependencies", "nx", "shared"]
-globs: []
 alwaysApply: false
 ---
 

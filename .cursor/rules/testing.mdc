@@ -6,7 +6,6 @@ description: "USE WHEN
 - Applying arrange-act-assert or test pyramid guidance
 - Reviewing test quality and coverage gaps"
 keywords: ["testing", "mocking", "coverage", "unit", "integration", "e2e", "assert", "flaky"]
-globs: []
 alwaysApply: false
 ---
 
