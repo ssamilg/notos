@@ -161,7 +161,7 @@ export function NoteList({
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-white/70 pb-6">
         <BreadcrumbHeader
           parentLabel="projects"
           title={projectName}
