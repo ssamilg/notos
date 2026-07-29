@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import { Circle, CircleCheck } from "lucide-react";
 import type { Note } from "@/types/domain";
 import { BreadcrumbHeader } from "@/components/BreadcrumbHeader";
 import { ConfirmationModal } from "@/components/ConfirmationModal";
@@ -258,17 +259,30 @@ export function NoteDetail({
     );
   }
 
+  const completeToggleAriaLabel = note.is_completed
+    ? "Mark note as incomplete"
+    : "Mark note as complete";
+
+  const markDoneButton = (
+    <button
+      type="button"
+      className="flex shrink-0 items-center gap-2 text-caption text-muted-foreground transition-colors hover:text-foreground hover:glow-text disabled:pointer-events-none disabled:opacity-50"
+      onClick={onToggleComplete}
+      disabled={isDeleting}
+      aria-label={completeToggleAriaLabel}
+      tabIndex={0}
+    >
+      {note.is_completed ? (
+        <CircleCheck className="size-4" aria-hidden="true" />
+      ) : (
+        <Circle className="size-4" aria-hidden="true" />
+      )}
+      Mark Done
+    </button>
+  );
+
   let actionContent = (
     <>
-      <GlowButton
-        type="button"
-        onClick={onToggleComplete}
-        disabled={isDeleting}
-        tabIndex={0}
-      >
-        {note.is_completed ? "Mark Incomplete" : "Mark Done"}
-      </GlowButton>
-
       <GlowButton type="button" onClick={startEditing} disabled={isDeleting} tabIndex={0}>
         Edit
       </GlowButton>
@@ -370,13 +384,16 @@ export function NoteDetail({
         className="sticky top-0 z-20 -mx-6 mb-8 bg-background/95 px-6 pb-4 backdrop-blur-sm"
       >
         {breadcrumbHeader}
-        <div className="flex flex-wrap gap-4">{tagContent}</div>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 flex-1 flex-wrap gap-4">{tagContent}</div>
+          {!isEditing && markDoneButton}
+        </div>
       </div>
 
       <NoteActionRail variant="mobile">{actionContent}</NoteActionRail>
 
       <div className="flex flex-col items-start gap-0 md:flex-row md:gap-[60px]">
-        <NoteContentFrame>{bodyContent}</NoteContentFrame>
+        <NoteContentFrame className="min-h-[500px]">{bodyContent}</NoteContentFrame>
         <NoteActionRail variant="desktop">{actionContent}</NoteActionRail>
       </div>
 

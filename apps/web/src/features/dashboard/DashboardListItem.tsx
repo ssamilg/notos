@@ -130,14 +130,6 @@ export function DashboardListItem({
             <GlowButton
               type="button"
               onMouseDown={markActionClick}
-              onClick={onDelete}
-              tabIndex={0}
-            >
-              Delete
-            </GlowButton>
-            <GlowButton
-              type="button"
-              onMouseDown={markActionClick}
               onClick={handleSaveClick}
               tabIndex={0}
             >
@@ -164,6 +156,15 @@ export function DashboardListItem({
             <GlowButton type="button" className="shrink-0" onClick={onStartEdit} tabIndex={0}>
               Edit
             </GlowButton>
+            <GlowButton
+              type="button"
+              className="shrink-0"
+              onMouseDown={markActionClick}
+              onClick={onDelete}
+              tabIndex={0}
+            >
+              Delete
+            </GlowButton>
           </div>
         </div>
         {metaNode}
@@ -177,6 +178,15 @@ export function DashboardListItem({
           <div className="list-row-hover-actions">
             <GlowButton type="button" className="shrink-0" onClick={onStartEdit} tabIndex={0}>
               Edit
+            </GlowButton>
+            <GlowButton
+              type="button"
+              className="shrink-0"
+              onMouseDown={markActionClick}
+              onClick={onDelete}
+              tabIndex={0}
+            >
+              Delete
             </GlowButton>
           </div>
         </div>

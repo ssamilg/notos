@@ -1,3 +1,4 @@
+import { Circle, CircleCheck } from "lucide-react";
 import type { Note } from "@/types/domain";
 import { DateDisplay } from "@/components/DateDisplay";
 import { TagDisplay } from "@/components/TagDisplay";
@@ -127,9 +128,11 @@ export function NoteListItem({
               aria-label={completeLabel}
               tabIndex={0}
             >
-              <svg className="note-noise-svg" viewBox="0 0 48 24" preserveAspectRatio="none" aria-hidden="true">
-                <path className="note-wave-path" />
-              </svg>
+              {note.is_completed ? (
+                <CircleCheck className="note-marker-icon" aria-hidden="true" />
+              ) : (
+                <Circle className="note-marker-icon" aria-hidden="true" />
+              )}
             </button>
           </div>
           <button

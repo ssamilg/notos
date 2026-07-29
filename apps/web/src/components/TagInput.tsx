@@ -103,14 +103,14 @@ export function TagInput(props: TagInputProps) {
 
   function addTag(name: string) {
     if (!isSingleMode(props)) {
-      const trimmed = name.trim();
+      const normalized = name.trim().replace(/\s+/g, "-");
 
-      if (!trimmed || props.value.includes(trimmed)) {
+      if (!normalized || props.value.includes(normalized)) {
         closeDropdown();
         return;
       }
 
-      props.onChange([...props.value, trimmed]);
+      props.onChange([...props.value, normalized]);
       closeDropdown();
     }
   }

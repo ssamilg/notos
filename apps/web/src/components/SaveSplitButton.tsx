@@ -94,8 +94,10 @@ export function SaveSplitButton({
               <button
                 type="button"
                 className={cn(
-                  "text-body w-full px-3 py-2 text-left transition-colors hover:bg-muted/60",
-                  preferredAction === option.action ? "text-foreground" : "text-muted-foreground"
+                  "text-caption w-full px-3 py-1.5 text-left transition-colors hover:bg-muted/60",
+                  preferredAction === option.action
+                    ? "text-foreground"
+                    : "text-muted-foreground/70"
                 )}
                 onClick={() => handleSelectAction(option.action)}
                 tabIndex={0}

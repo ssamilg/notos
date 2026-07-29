@@ -59,7 +59,6 @@
   --glow-full: 0 0 8px rgba(255, 255, 255, 0.70);
   --morph-speed: 0.25s;
   --shoot-speed: 0.35s;
-  --transition-snap: cubic-bezier(0.4, 0, 0.2, 1);
   --transition-shoot: cubic-bezier(0.1, 0.9, 0.2, 1);
   --note-line-width: 2px;
   --note-line-active: var(--text-glowing-white);
@@ -200,7 +199,7 @@
   }
 
   .list-row-hover-actions {
-    @apply absolute top-1/2 right-0 flex shrink-0 -translate-y-1/2 translate-x-4 opacity-0 transition-all duration-300 ease-out pointer-events-none;
+    @apply absolute top-1/2 right-0 flex shrink-0 items-center gap-2 -translate-y-1/2 translate-x-4 opacity-0 transition-all duration-300 ease-out pointer-events-none;
   }
 
   .list-row:hover .list-row-hover-actions,
@@ -330,40 +329,29 @@
     min-height: 1.75rem;
     display: flex;
     align-items: center;
+    justify-content: center;
     border: none;
     background: transparent;
     padding: 0;
     cursor: pointer;
   }
 
-  .note-noise-svg {
-    width: 100%;
-    height: 24px;
-    overflow: visible;
-    display: block;
-  }
-
-  .note-wave-path {
-    d: path("M 0 12 L 8 12 L 14 7 L 19 18 L 24 2 L 29 22 L 34 8 L 40 12 L 48 12");
-    fill: none;
-    stroke: var(--note-line-active);
-    stroke-width: var(--note-line-width);
-    stroke-linecap: butt;
-    stroke-linejoin: miter;
-    vector-effect: non-scaling-stroke;
-    transition:
-      d var(--morph-speed) var(--transition-snap),
-      stroke var(--morph-speed) ease;
+  .note-marker-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--note-line-active);
     filter: drop-shadow(var(--glow-subtle));
+    transition:
+      color var(--morph-speed) ease,
+      filter var(--morph-speed) ease;
   }
 
-  .note-marker:hover .note-wave-path {
+  .note-marker:hover .note-marker-icon {
     filter: drop-shadow(var(--glow-wave));
   }
 
-  .note-row-completed .note-wave-path {
-    d: path("M 0 12 L 8 12 L 14 12 L 19 12 L 24 12 L 29 12 L 34 12 L 40 12 L 48 12");
-    stroke: var(--note-line-complete);
+  .note-row-completed .note-marker-icon {
+    color: var(--note-line-complete);
     filter: none;
   }
 
